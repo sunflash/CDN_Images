@@ -1,0 +1,15 @@
+{
+    "name":"MR-CDN",
+    "version":"0.0.1",
+    "description":"Generate scaled catalog image and push to CDN for delivery",
+    "main":"./index",
+    "dependencies":{
+        "express":"3.2.x",
+        "mysql":"2.x",
+        "async":"0.x",
+        "request":"2.x",
+        "cron":"1.x",
+        "redis":"0.x"
+    },
+    "private":true
+}
