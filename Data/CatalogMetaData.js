@@ -94,7 +94,10 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
     // Parse data and do something with data
 
-        if (err) console.log(err);
+        if (err) {
+            console.log(err);
+            callBack(null);
+        }
         else
         {
             var activeCatalogs = {};

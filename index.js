@@ -60,9 +60,15 @@ app.get('/debug', function(req, res){
 
     catalogMetaData.getCatalogData(
         function (data) {
-            res.json(data);
-            res.end();
-            console.log('JSON output');
+
+            if (!data) {
+                res.send(404);
+            }
+            else {
+                res.json(data);
+                res.end();
+                console.log('JSON output');
+            }
         }
     );
 });
