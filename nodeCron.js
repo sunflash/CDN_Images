@@ -12,7 +12,7 @@ var cronJob = require('cron').CronJob;
 
 exports.cron = function cron () {
 
-    new cronJob('0 */5 * * * *', function(){
+    new cronJob('5 */5 * * * *', function(){
 
         var currentTime = new Date();
         console.log(currentTime);
