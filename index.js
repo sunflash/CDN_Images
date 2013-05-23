@@ -6,11 +6,14 @@
  * To change this template use File | Settings | File Templates.
  */
 
+//-------------------------------------------------------------------------------
+
 // Start CronJob
 
 var nodeCron = require('./nodeCron');
 nodeCron.cron();
 
+//-------------------------------------------------------------------------------
 
 // Express router
 
@@ -19,6 +22,8 @@ var express = require('express');
 var app = express ();
 app.use(express.compress());
 app.disable('x-powered-by');
+
+//-------------------------------------------------
 
 app.get('/', function(req, res) {
 
@@ -30,6 +35,10 @@ app.get('/mr', function(req, res){
 
     res.redirect('http://www.minreklame.dk', 307);
 });
+
+//------------------------------------------------
+
+var resizeImage =  require('./ImageIO/ResizeImage')
 
 app.get('/image', function(req, res){
 
@@ -46,13 +55,24 @@ app.get('/image', function(req, res){
             "Width":width,
             "Height":height
         }
-        res.json(query);
+
+        resizeImage.resizeImage(query, function (data) {
+
+            if (!data) res.send(404);
+            else
+            {
+                res.send(data);
+            }
+            res.end();
+        });
     }
     else {
-        res.send("Aaaa ooo!");
+        res.send(404,"Aaaa ooo!");
         res.end();
     }
 });
+
+//------------------------------------------------------
 
 var catalogMetaData = require('./Data/CatalogMetaData');
 

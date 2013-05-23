@@ -167,8 +167,8 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                             //console.log(saveFilePath+'  '+imageInfo.imageLink);
                             console.log(saveFilePath);
 
-                            if (success == true) next(null,imageInfo);
-                            else                 next(null);
+                            if (success) next(null,imageInfo);
+                            else         next(null);
                         })
                     }
                     ,function(err, results){

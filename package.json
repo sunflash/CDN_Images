@@ -9,7 +9,8 @@
         "async":"0.x",
         "request":"2.x",
         "cron":"1.x",
-        "redis":"0.x"
+        "redis":"0.x",
+        "gm":"1.x"
     },
     "private":true
 }

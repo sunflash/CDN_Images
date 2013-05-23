@@ -28,19 +28,32 @@ exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback)
     out.on('response', function (resp) {
 
         if (resp.statusCode === 200){
+
             out.pipe(localStream);
+
             localStream.on('close', function () {
-                callback(null, true);
+                callback(null, 1);
+            });
+
+            localStream.on('error', function (){
+
+                fs.unlink(savePath, function (err) {
+                    if (err) callback(err);
+                    else {
+                        callback(new Error('successfully deleted '+savePath),null);
+                    }
+                });
             });
         }
         else {
 
             fs.unlink(savePath, function (err) {
-                if (err) throw err;
-                console.log('successfully deleted '+savePath);
+                if (err) callback(err);
+                else {
+                    console.log('successfully deleted '+savePath);
+                    callback(new Error("No file found at url : "+url),null);
+                }
             });
-
-            callback(new Error("No file found at url : "+url),false);
         }
     })
 }
