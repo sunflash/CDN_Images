@@ -15,16 +15,28 @@ var saveFilePathPrefix  = '../images';
 
 exports.resizeImage = function resizeImage (resizeParameters,callback) {
 
-    var  resizeImageFlow  = async.compose(resizeRequestImage,createResizeImageFolderIfNotExist,checkImageExistLocal);
+    var resizeImagePath = path.join(saveFilePathPrefix,resizeParameters.PublicationID.toString(),(resizeParameters.Width+'x'+resizeParameters.Height),(resizeParameters.PageNumber+'.jpg'));
 
-    resizeImageFlow(resizeParameters,function (err, result) {
+    fs.exists(resizeImagePath, function(exists) {
 
-        if (err) {
-            console.log(err);
-            callback (null);
+        if (exists) {
+            console.log('ResizeImageExist '+resizeImagePath);
+            callback(resizeImagePath);
         }
-        else if (result)   callback(result);
-        else               callback(null);
+        else {
+
+            var  resizeImageFlow  = async.compose(resizeRequestImage,createResizeImageFolderIfNotExist,checkImageExistLocal);
+
+            resizeImageFlow(resizeParameters,function (err, result) {
+
+                if (err) {
+                    console.log(err);
+                    callback (null);
+                }
+                else if (result)   callback(result);
+                else               callback(null);
+            });
+        }
     });
 
     console.log('***** ResizeImage *****');
