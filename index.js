@@ -38,7 +38,8 @@ app.get('/mr', function(req, res){
 
 //------------------------------------------------
 
-var resizeImage =  require('./ImageIO/ResizeImage')
+var resizeImage =  require('./ImageIO/ResizeImage');
+var path        =  require('path');
 
 app.get('/image', function(req, res){
 
@@ -58,12 +59,11 @@ app.get('/image', function(req, res){
 
         resizeImage.resizeImage(query, function (data) {
 
-            if (!data) res.send(404);
-            else
-            {
-                res.send(data);
+            if (!data) {
+                res.send(404,"Aaaa ooo!");
+                res.end();
             }
-            res.end();
+            else res.sendfile(path.resolve(data));
         });
     }
     else {

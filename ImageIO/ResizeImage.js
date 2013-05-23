@@ -9,8 +9,9 @@
 var fs      = require('fs');
 var async   = require('async');
 var gm      = require('gm');
+var path    = require('path');
 
-var saveFilePathPrefix  = '../images/';
+var saveFilePathPrefix  = '../images';
 
 exports.resizeImage = function resizeImage (resizeParameters,callback) {
 
@@ -31,19 +32,18 @@ exports.resizeImage = function resizeImage (resizeParameters,callback) {
 
 function checkImageExistLocal (parameters, callback) {
 
-    var imageFolderPath = saveFilePathPrefix + parameters.PublicationID;
-    var imageFilePath   = imageFolderPath  + '/' + parameters.PageNumber + ".jpg";
+    var imageFilePath = path.join(saveFilePathPrefix, parameters.PublicationID.toString(), (parameters.PageNumber+'.jpg'));
 
     fs.exists(imageFilePath, function(exists) {
 
         if (!exists) callback('Image NOT exist');
-        else         callback(null,parameters,imageFolderPath);
+        else         callback(null,parameters,path.dirname(imageFilePath));
     });
 }
 
 function createResizeImageFolderIfNotExist (parameters,imageFolderPath,callback) {
 
-    var saveFileFolderPath = imageFolderPath+'/'+parameters.Width+'x'+parameters.Height;
+    var saveFileFolderPath = path.join(imageFolderPath,(parameters.Width+'x'+parameters.Height));
 
     fs.exists(saveFileFolderPath, function(exists) {
 
@@ -64,8 +64,8 @@ function createResizeImageFolderIfNotExist (parameters,imageFolderPath,callback)
 function resizeRequestImage (parameters,imageFolderPath,saveFileFolderPath,callback) {
 
     var filename      = parameters.PageNumber+'.jpg';
-    var imageFilePath = imageFolderPath + '/' + filename;
-    var saveFilePath  = saveFileFolderPath + '/' + filename;
+    var imageFilePath = path.join(imageFolderPath,filename);
+    var saveFilePath  = path.join(saveFileFolderPath,filename);
     var readStream = fs.createReadStream(imageFilePath);
     var writeStream = fs.createWriteStream(saveFilePath);
 

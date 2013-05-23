@@ -55,5 +55,5 @@ exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback)
                 }
             });
         }
-    })
+    });
 }

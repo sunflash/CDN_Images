@@ -6,12 +6,13 @@
  * To change this template use File | Settings | File Templates.
  */
 
-var async = require('async');
+var async   = require('async');
 var fs      = require('fs');
+var path    = require('path')
 var fileSystem = require('./FileSystem');
 
 var imageSuffix         = 'Image.ashx?ImageType=Zoom&PageNumber=';
-var saveFilePathPrefix  = '../images/';
+var saveFilePathPrefix  = '../images';
 
 var status = 0;
 
@@ -41,15 +42,14 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                     var catalogPageCount    = activeCatalogs[i].pageCount;
                     var imageLinkBody       = activeCatalogs[i].iPaperLink + imageSuffix;
 
-                    var saveFileDirectory = saveFilePathPrefix + catalogPubID;
+                    var saveFileDirectory = path.join(saveFilePathPrefix,catalogPubID.toString());
                     activeCatalogImageFolders.push(saveFileDirectory);
 
                     for (var j = 1; j <= catalogPageCount; j++ ){
 
                         var image = {};
 
-                        image.saveFileDirectory  = saveFileDirectory;
-                        image.saveFileName       = j + '.jpg';
+                        image.filePath           = path.join(saveFileDirectory,(j + '.jpg'));
                         image.imageLink          = imageLinkBody + j;
 
                         activeCatalogImagesInfo.push(image);
@@ -98,7 +98,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
 
                         var folderExist = [];
                         for (var i = 0; i < items.length; i++ ) {
-                            folderExist.push(saveFilePathPrefix+items[i]);
+                            folderExist.push(path.join(saveFilePathPrefix,items[i]));
                         }
 
                         Array.prototype.diff = function(a) {
@@ -132,9 +132,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                 async.reject(activeCatalogImagesInfo,
                     function(imageInfo,next) {
 
-                        var saveFilePath = imageInfo.saveFileDirectory + '/' + imageInfo.saveFileName;
-
-                        fs.exists(saveFilePath, function(exists) {
+                        fs.exists(imageInfo.filePath, function(exists) {
 
                             if (exists) {next(true);}
                             else         next(false);
@@ -159,13 +157,11 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                 async.mapLimit(downloadImagesInfo,maxDownloadSimultaneousConnections,
                     function(imageInfo,next) {
 
-                        var saveFilePath = imageInfo.saveFileDirectory + '/' + imageInfo.saveFileName;
-
-                        fileSystem.downloadFileFromURL(imageInfo.imageLink,saveFilePath,function (err, success){
+                        fileSystem.downloadFileFromURL(imageInfo.imageLink,imageInfo.filePath,function (err, success){
 
                             if (err) {console.log(err);}
-                            //console.log(saveFilePath+'  '+imageInfo.imageLink);
-                            console.log(saveFilePath);
+                            //console.log(imageInfo.filePath+'  '+imageInfo.imageLink);
+                            console.log(imageInfo.filePath);
 
                             if (success) next(null,imageInfo);
                             else         next(null);
