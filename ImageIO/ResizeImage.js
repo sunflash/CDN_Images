@@ -63,8 +63,7 @@ function createResizeImageFolderIfNotExist (parameters,imageFolderPath,callback)
 
             fs.mkdir(saveFileFolderPath, function(error) {
 
-                if(error) callback(error);
-                else      callback(null,parameters,imageFolderPath,saveFileFolderPath);
+                callback(null,parameters,imageFolderPath,saveFileFolderPath);
 
             });
         }
@@ -80,6 +79,9 @@ function resizeRequestImage (parameters,imageFolderPath,saveFileFolderPath,callb
     var saveFilePath  = path.join(saveFileFolderPath,filename);
     var readStream = fs.createReadStream(imageFilePath);
     var writeStream = fs.createWriteStream(saveFilePath);
+
+    readStream.setMaxListeners(0);
+    writeStream.setMaxListeners(0);
 
     gm(readStream,filename)
         .resize(parameters.Width,parameters.Height)
