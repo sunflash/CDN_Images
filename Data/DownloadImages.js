@@ -21,7 +21,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
 
     // ONLY one download instance at a time, status 0 no active instance, status 1 download instance running already
 
-    if (status == 0) {
+    if (status == 0 && activeCatalogsCount > 0) {
 
         status = 1;
 

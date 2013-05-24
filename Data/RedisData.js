@@ -13,15 +13,17 @@ var redis = require("redis"),
 
 exports.updateRedisData = function updateRedisData (activeCatalogs, activeCatalogsCount) {
 
+    if (activeCatalogsCount > 0) {
 
-    var  dataFlow  = async.compose(cleanUnusedExpiredData,overWriteWithFreshData);
+        var  dataFlow  = async.compose(cleanUnusedExpiredData,overWriteWithFreshData);
 
-    dataFlow(activeCatalogs, activeCatalogsCount,function (err, result) {
+        dataFlow(activeCatalogs, activeCatalogsCount,function (err, result) {
 
-        if (err)                    console.log(err);
-        else if (!result)           console.log('NO unusedExpiredCatalogs data in redis db, no clean up needed');
-        else if (result.length > 0) console.log('Remove '+result.length+' unusedExpiredCatalogs data in redis db');
-    });
+            if (err)                    console.log(err);
+            else if (!result)           console.log('NO unusedExpiredCatalogs data in redis db, no clean up needed');
+            else if (result.length > 0) console.log('Remove '+result.length+' unusedExpiredCatalogs data in redis db');
+        });
+    }
 
     console.log('***** RedisData *****');
 }

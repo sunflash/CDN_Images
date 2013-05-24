@@ -102,34 +102,38 @@ exports.getCatalogData = function getCatalogData (callBack) {
         {
             var activeCatalogs = {};
 
-            for (var i = 1; i <= activeCatalogArray.length; i++) {
+            if (activeCatalogArray.length > 0) {
 
-                var catalog = {};
-                var pageCount = activeCatalogArray[i-1].pageCount;
-                var pubID     = activeCatalogArray[i-1].id;
+                for (var i = 1; i <= activeCatalogArray.length; i++) {
 
-                catalog.pubID    = pubID;
-                catalog.pubStart = activeCatalogArray[i-1].time_start;
-                catalog.pubStop  = activeCatalogArray[i-1].time_stop;
-                catalog.pageCount   = pageCount;
-                catalog.iPaperID    = activeCatalogArray[i-1].ipaper_id;
-                catalog.iPaperLink  = activeCatalogArray[i-1].path;
+                    var catalog = {};
+                    var pageCount = activeCatalogArray[i-1].pageCount;
+                    var pubID     = activeCatalogArray[i-1].id;
 
-                activeCatalogs[i] = catalog;
-                catalog = null;
+                    catalog.pubID    = pubID;
+                    catalog.pubStart = activeCatalogArray[i-1].time_start;
+                    catalog.pubStop  = activeCatalogArray[i-1].time_stop;
+                    catalog.pageCount   = pageCount;
+                    catalog.iPaperID    = activeCatalogArray[i-1].ipaper_id;
+                    catalog.iPaperLink  = activeCatalogArray[i-1].path;
 
-                if (pageCount == 0) {
-                    console.log("Error, catalog "+pubID+ " have NO pages.");
+                    activeCatalogs[i] = catalog;
+                    catalog = null;
+
+                    if (pageCount == 0) {
+                        console.log("Error, catalog "+pubID+ " have NO pages.");
+                    }
+                    else if ( (pageCount%2) == 1) {
+
+                        //console.log("!!! catalog "+pubID+ " have odd pages "+pageCount);
+                    }
+                    //else {console.log("Catalog "+pubID+" have "+pageCount+" pages.");}
                 }
-                else if ( (pageCount%2) == 1) {
 
-                    //console.log("!!! catalog "+pubID+ " have odd pages "+pageCount);
-                }
-                //else {console.log("Catalog "+pubID+" have "+pageCount+" pages.");}
+                downloadImages.downloadActiveCatalogImage(activeCatalogs,activeCatalogArray.length);
+                redisData.updateRedisData(activeCatalogs,activeCatalogArray.length);
             }
 
-            downloadImages.downloadActiveCatalogImage(activeCatalogs,activeCatalogArray.length);
-            redisData.updateRedisData(activeCatalogs,activeCatalogArray.length);
             callBack (activeCatalogs);
             activeCatalogs = null;
         }
