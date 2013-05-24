@@ -28,7 +28,7 @@ exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback)
 
     out.on('response', function (resp) {
 
-        if (resp.statusCode === 200){
+        if (resp.statusCode === 200 || resp.statusCode == 304){
 
             out.pipe(localStream);
 
