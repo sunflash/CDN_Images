@@ -10,18 +10,20 @@ var async = require("async");
 var redis = require("redis"),
     client = redis.createClient();
 
+var  dataFlow  = async.compose(cleanUnusedExpiredData,overWriteWithFreshData);
 
 exports.updateRedisData = function updateRedisData (activeCatalogs, activeCatalogsCount) {
 
     if (activeCatalogsCount > 0) {
 
-        var  dataFlow  = async.compose(cleanUnusedExpiredData,overWriteWithFreshData);
-
         dataFlow(activeCatalogs, activeCatalogsCount,function (err, result) {
 
             if (err)                    console.log(err);
             else if (!result)           console.log('NO unusedExpiredCatalogs data in redis db, no clean up needed');
-            else if (result.length > 0) console.log('Remove '+result.length+' unusedExpiredCatalogs data in redis db');
+            else if (result.length > 0) {
+                console.log('Remove '+result.length+' unusedExpiredCatalogs data in redis db');
+                result = null;
+            }
         });
     }
 
@@ -41,6 +43,8 @@ function overWriteWithFreshData (activeCatalogsData, activeCatalogsCount, callba
         client.HMSET(catalogPubID,activeCatalogInfo,function (err, obj) {
             if (err) callback(err);
             //else     console.dir(obj);
+            activeCatalogInfo = null;
+            catalogPubID      = null;
         });
     }
 
@@ -49,6 +53,10 @@ function overWriteWithFreshData (activeCatalogsData, activeCatalogsCount, callba
 
 
 var pubKeysFilter = catalogRedisKeyPrefix + '*';
+
+Array.prototype.diff = function(a) {
+    return this.filter(function(i) {return !(a.indexOf(i) > -1);});
+};
 
 function cleanUnusedExpiredData(activeCatalogsData, activeCatalogsCount, callback) {
 
@@ -62,11 +70,8 @@ function cleanUnusedExpiredData(activeCatalogsData, activeCatalogsCount, callbac
                 activeCatalogsRedisDataKeys.push(catalogRedisKeyPrefix+activeCatalogsData[i].pubID);
             }
 
-            Array.prototype.diff = function(a) {
-                return this.filter(function(i) {return !(a.indexOf(i) > -1);});
-            };
-
             var unusedExpiredCatalogs =  replies.diff(activeCatalogsRedisDataKeys);
+            activeCatalogsRedisDataKeys = null;
 
             if (unusedExpiredCatalogs.length > 0) {
 

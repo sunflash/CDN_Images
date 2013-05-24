@@ -15,6 +15,7 @@ exports.removeFolderRecursive = function removeFolderRecursive (folderPath){
     var deleteFolderCommand = 'rm -rf '+folderPath;
     exec(deleteFolderCommand,function(err,out) {
         console.log(out); err && console.log(err);
+        deleteFolderCommand = null;
     });
 }
 
@@ -33,6 +34,8 @@ exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback)
 
             localStream.on('close', function () {
                 callback(null, 1);
+                localStream = null;
+                out = null;
             });
 
             localStream.on('error', function (){
@@ -42,6 +45,8 @@ exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback)
                     else {
                         callback(new Error('successfully deleted '+savePath),null);
                     }
+                    localStream = null;
+                    out = null;
                 });
             });
         }
@@ -53,6 +58,8 @@ exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback)
                     console.log('successfully deleted '+savePath);
                     callback(new Error("No file found at url : "+url),null);
                 }
+                localStream = null;
+                out = null;
             });
         }
     });

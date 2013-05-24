@@ -27,7 +27,7 @@ app.disable('x-powered-by');
 
 app.get('/', function(req, res) {
 
-    res.send("Minreklame Debian Test Server");
+    res.send("MR Debian Test Server");
     res.end();
 });
 
@@ -64,7 +64,14 @@ app.get('/image', function(req, res){
                 res.end();
             }
             else res.sendfile(path.resolve(data));
+
+            query = null;
         });
+
+        publicationID = null;
+        page = null;
+        width = null;
+        height = null;
     }
     else {
         res.send(404,"Aaaa ooo!");

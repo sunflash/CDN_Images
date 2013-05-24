@@ -13,6 +13,8 @@ var path    = require('path');
 
 var saveFilePathPrefix  = '../images';
 
+var  resizeImageFlow  = async.compose(resizeRequestImage,createResizeImageFolderIfNotExist,checkImageExistLocal);
+
 exports.resizeImage = function resizeImage (resizeParameters,callback) {
 
     var resizeImagePath = path.join(saveFilePathPrefix,resizeParameters.PublicationID.toString(),(resizeParameters.Width+'x'+resizeParameters.Height),(resizeParameters.PageNumber+'.jpg'));
@@ -25,8 +27,6 @@ exports.resizeImage = function resizeImage (resizeParameters,callback) {
         }
         else {
 
-            var  resizeImageFlow  = async.compose(resizeRequestImage,createResizeImageFolderIfNotExist,checkImageExistLocal);
-
             resizeImageFlow(resizeParameters,function (err, result) {
 
                 if (err) {
@@ -37,6 +37,8 @@ exports.resizeImage = function resizeImage (resizeParameters,callback) {
                 else               callback(null);
             });
         }
+
+        resizeImagePath = null;
     });
 
     console.log('***** ResizeImage *****');
@@ -50,6 +52,8 @@ function checkImageExistLocal (parameters, callback) {
 
         if (!exists) callback('Image NOT exist');
         else         callback(null,parameters,path.dirname(imageFilePath));
+
+        imageFilePath = null;
     });
 }
 
@@ -71,14 +75,19 @@ function createResizeImageFolderIfNotExist (parameters,imageFolderPath,callback)
     });
 }
 
+var readStream;
+var writeStream;
 
 function resizeRequestImage (parameters,imageFolderPath,saveFileFolderPath,callback) {
 
     var filename      = parameters.PageNumber+'.jpg';
     var imageFilePath = path.join(imageFolderPath,filename);
     var saveFilePath  = path.join(saveFileFolderPath,filename);
-    var readStream = fs.createReadStream(imageFilePath);
-    var writeStream = fs.createWriteStream(saveFilePath);
+    readStream = fs.createReadStream(imageFilePath);
+    writeStream = fs.createWriteStream(saveFilePath);
+
+    imageFolderPath = null;
+    saveFileFolderPath = null;
 
     readStream.setMaxListeners(0);
     writeStream.setMaxListeners(0);
@@ -90,6 +99,10 @@ function resizeRequestImage (parameters,imageFolderPath,saveFileFolderPath,callb
 
     writeStream.on('close', function () {
         callback(null,saveFilePath);
+
+        filename = null;
+        imageFilePath = null;
+        saveFilePath = null;
     });
 
     writeStream.on('error', function (){
@@ -99,6 +112,10 @@ function resizeRequestImage (parameters,imageFolderPath,saveFileFolderPath,callb
             else {
                 callback(new Error('successfully deleted '+saveFilePath),null);
             }
+
+            filename = null;
+            imageFilePath = null;
+            saveFilePath = null;
         });
     });
 

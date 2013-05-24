@@ -55,6 +55,11 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                         activeCatalogImagesInfo.push(image);
                         image = null;
                     }
+
+                    catalogPubID = null;
+                    catalogPageCount = null;
+                    imageLinkBody = null;
+                    saveFileDirectory = null;
                 }
 
                 console.log('downloadImageFoldersCount '+activeCatalogImageFolders.length);
@@ -117,9 +122,14 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                                 function(err, results){
 
                                     if (results) console.log('Delete '+results.length+' folders');
+                                    unusedExpiredFolders = null;
                                 });
                         }
+                        else unusedExpiredFolders = null;
+
+                        folderExist = null;
                         activeCatalogImageFolders = null;
+
                         callback(null,activeCatalogImagesInfo);
                     }
                 });
@@ -176,6 +186,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
 
                         downloadImagesInfo = null;
                         results = null;
+                        maxDownloadSimultaneousConnections = null;
 
                         status = 0;
                     });
@@ -184,6 +195,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
             else {
                 console.log('No image to download');
                 downloadImagesInfo = null;
+                maxDownloadSimultaneousConnections = null;
 
                 status = 0;
             }

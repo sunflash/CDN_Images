@@ -74,6 +74,8 @@ exports.getCatalogData = function getCatalogData (callBack) {
                             next('Connection error');
                         }
                         else {next(null,rows);}
+
+                        iPaperID = null;
                     });
                 });
 
@@ -119,6 +121,8 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
                     activeCatalogs[i] = catalog;
                     catalog = null;
+                    pageCount = null;
+                    pubID = null;
 
                     if (pageCount == 0) {
                         console.log("Error, catalog "+pubID+ " have NO pages.");
