@@ -88,7 +88,8 @@ app.get('/debug', function(req, res){
         function (data) {
 
             if (!data) {
-                res.send(404);
+                res.send(404,"Aaaa ooo!");
+                res.end();
             }
             else {
                 res.json(data);
@@ -98,5 +99,25 @@ app.get('/debug', function(req, res){
         }
     );
 });
+
+//------------------------------------------------------
+
+var cdnAPI = require('./CDN/CDN_API');
+
+app.get('/api', function(req, res) {
+
+    cdnAPI.authenticate(function(data) {
+
+        if (data) {
+            res.json(data);
+            res.end();
+        }
+        else {
+            res.send(404,"Aaaa ooo!");
+            res.end();
+        }
+    })
+});
+
 
 app.listen(80);
