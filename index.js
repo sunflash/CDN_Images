@@ -65,7 +65,6 @@ app.get('/image', function(req, res){
             }
             else res.sendfile(path.resolve(data));
 
-            query = null;
         });
 
         publicationID = null;
