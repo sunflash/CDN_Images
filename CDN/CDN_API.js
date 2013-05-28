@@ -129,6 +129,13 @@ exports.authDetails = function authDetails (callback) {
 
 exports.accountDetails = function accountDetails (callback) {
 
+    getAccountDetails(function (accountDetails) {
+       callback(accountDetails);
+    });
+}
+
+function getAccountDetails (callback) {
+
     getAuthInfo(function (api) {
 
         request(
