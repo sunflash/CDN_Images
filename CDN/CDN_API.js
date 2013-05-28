@@ -160,4 +160,52 @@ exports.accountDetails = function accountDetails (callback) {
 
 //--------------------------------------------------------------------------------
 
+// Get list of container in json, max 10000
 
+exports.containerList = function containerList (callback) {
+
+    getContainerList(function(containerList){
+        callback(containerList);
+    })
+}
+
+function getContainerList (callback) {
+
+    getAuthInfo(function (api) {
+
+        request(
+            {
+                method:'GET',
+                uri:api.storageURL+'?format=json',
+                headers:{
+                    'X-Auth-Token':api.authToken
+                }
+            }
+            , function (error, response, body) {
+
+                if (response.statusCode == 200) {
+
+                    var containerArray =  JSON.parse(body);
+                    var containers = {};
+
+                    for (var i = 0; i < containerArray.length; i++) {
+
+                        var container = {};
+                        container.containerName  = containerArray[i].name;
+                        container.objectsCount = containerArray[i].count;
+                        container.containerBytes = containerArray[i].bytes;
+                        containers[i+1]= container;
+                        container = null;
+                    }
+
+                    callback(containers);
+                    containerArray = null;
+                    containers = null;
+                }
+                else callback(null);
+            }
+        );
+
+    });
+
+}
