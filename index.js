@@ -106,16 +106,12 @@ var cdnAPI = require('./CDN/CDN_API');
 
 app.get('/api', function(req, res) {
 
-    cdnAPI.authenticate(function(data) {
+    cdnAPI.getAuthInfo(function(data) {
 
-        if (data) {
-            res.json(data);
-            res.end();
-        }
-        else {
-            res.send(404,"Aaaa ooo!");
-            res.end();
-        }
+        if (data)   res.json(data);
+        else        res.send(404,"Aaaa ooo!");
+
+        res.end();
     })
 });
 

@@ -6,22 +6,26 @@
  * To change this template use File | Settings | File Templates.
  */
 
+var request = require('request');
 var redis = require("redis"),
     client = redis.createClient();
-
-var request = require('request');
 
 var user = 'minreklame';
 var id = '634ffdbbc9aff9c74a4c66818616384f';
 var authLink = 'https://lon.identity.api.rackspacecloud.com/v1.0';
 
-var authRedis = "cdn.auth";
+//--------------------------------------------------------------------------------
 
-exports.authenticate = function authenticate (callback) {
+// Authentication to rackspace CDN
+
+var authInfo = {};
+var authRedis = 'cdn.auth';
+
+function authenticate (callback) {
 
     request(
         {
-            method:"GET",
+            method:'GET',
             uri:authLink,
             headers:{
                 'X-Auth-User':user,
@@ -36,8 +40,6 @@ exports.authenticate = function authenticate (callback) {
 
             if (response.statusCode == 204 || response.statusCode == 202) {
 
-                var authInfo = {};
-
                 authInfo.authToken      = response.headers['x-auth-token'];
                 authInfo.serverURL      = response.headers['x-server-management-url'];
                 authInfo.storageURL     = response.headers['x-storage-url'];
@@ -48,23 +50,78 @@ exports.authenticate = function authenticate (callback) {
                 now.setSeconds(now.getSeconds() + parseInt(response.headers['cache-control'].split("=")[1]));
                 authInfo.expireDate = now;
 
+                //console.log(authInfo);
+                //console.log('ExpireInSec '+response.headers['cache-control'].split("=")[1]);
+
                 client.HMSET(authRedis,authInfo,function (err, obj) {
+
                     if (err) callback(err);
                     //else     console.dir(obj);
 
-                    authInfo.expireInSec = response.headers['cache-control'].split("=")[1];
-                    authInfo.expireDate  = now.toString();
-
                     callback(authInfo);
-                    authInfo = null;
                     now = null;
                 });
             }
-            else {
-
-                callback(null);
-            }
+            else {callback(null);}
         }
     );
 }
+
+exports.getAuthInfo =  function getAuthInfo (callback) {
+
+    if (!authInfo.authToken) {
+
+        client.keys(authRedis, function (err, replies) {
+
+            if (err) callback(err,null);
+            else
+            {
+                if (replies.length == 0) {
+
+                    authenticate(function(authInfoFresh){
+
+                        //console.log('Fresh authInfo from rackspace');
+                        callback(authInfoFresh);
+                    });
+                }
+                else if  (replies.length == 1) {
+
+                    getAuthInfoFromRedis (function (authInfoRedis) {
+
+                        if (authInfoRedis) {
+
+                            //console.log('Loading authInfo from local redis db');
+                            authInfo = authInfoRedis;
+                            callback(authInfoRedis);
+                        }
+                    });
+                }
+            }
+        });
+    }
+    else {
+
+        //console.log('Reuse authInfo from global variable');
+        callback(authInfo);
+    }
+}
+
+function getAuthInfoFromRedis(callback) {
+
+    client.hgetall(authRedis, function (err, obj) {
+
+        if (err)        callback(null);
+        else if (obj)   callback(obj);
+        else            callback(null);
+    });
+}
+
+
+//--------------------------------------------------------------------------------
+
+exports.accountDetails = function accountDetails (callback) {
+
+
+}
+
 
