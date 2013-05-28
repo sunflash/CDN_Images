@@ -67,7 +67,7 @@ function authenticate (callback) {
     );
 }
 
-exports.getAuthInfo =  function getAuthInfo (callback) {
+function getAuthInfo (callback) {
 
     if (!authInfo.authToken) {
 
@@ -116,12 +116,48 @@ function getAuthInfoFromRedis(callback) {
     });
 }
 
+exports.authDetails = function authDetails (callback) {
+
+    getAuthInfo(function (api) {
+        callback(api);
+    });
+}
 
 //--------------------------------------------------------------------------------
 
+// Get Cloud Files account details
+
 exports.accountDetails = function accountDetails (callback) {
 
+    getAuthInfo(function (api) {
 
+        request(
+            {
+                method:'HEAD',
+                uri:api.storageURL,
+                headers:{
+                    'X-Auth-Token':api.authToken
+                }
+            }
+            , function (error, response, body) {
+
+                if (response.statusCode == 204) {
+
+                    var accountDetails = {};
+                    accountDetails.containerCount = response.headers['x-account-container-count'];
+                    accountDetails.objectCount    = response.headers['x-account-object-count']
+                    accountDetails.bytesUsed      = response.headers['x-account-bytes-used'];
+
+                    callback(accountDetails);
+                    accountDetails = null;
+                }
+                else callback(null);
+            }
+        );
+
+    });
 }
+
+//--------------------------------------------------------------------------------
 
 
