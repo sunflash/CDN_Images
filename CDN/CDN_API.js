@@ -158,6 +158,35 @@ function getAccountDetails (callback) {
                     callback(accountDetails);
                     accountDetails = null;
                 }
+                else if (response.statusCode == 401) {
+
+                    authenticate(function(authInfoFresh) {
+
+                        request(
+                            {
+                                method:'HEAD',
+                                uri:api.storageURL,
+                                headers:{
+                                    'X-Auth-Token':authInfoFresh.authToken
+                                }
+                            }
+                            , function (error, response, body) {
+
+                                if (response.statusCode == 204) {
+
+                                    var accountDetails = {};
+                                    accountDetails.containerCount = response.headers['x-account-container-count'];
+                                    accountDetails.objectCount    = response.headers['x-account-object-count']
+                                    accountDetails.bytesUsed      = response.headers['x-account-bytes-used'];
+
+                                    callback(accountDetails);
+                                    accountDetails = null;
+                                }
+                                else callback(null);
+                            }
+                        );
+                    });
+                }
                 else callback(null);
             }
         );
@@ -208,6 +237,44 @@ function getContainerList (callback) {
                     callback(containers);
                     containerArray = null;
                     containers = null;
+                }
+                else if (response.statusCode == 401) {
+
+                    authenticate(function(authInfoFresh) {
+
+                        request(
+                            {
+                                method:'GET',
+                                uri:api.storageURL+'?format=json',
+                                headers:{
+                                    'X-Auth-Token':api.authToken
+                                }
+                            }
+                            , function (error, response, body) {
+
+                                if (response.statusCode == 200) {
+
+                                    var containerArray =  JSON.parse(body);
+                                    var containers = {};
+
+                                    for (var i = 0; i < containerArray.length; i++) {
+
+                                        var container = {};
+                                        container.containerName  = containerArray[i].name;
+                                        container.objectsCount = containerArray[i].count;
+                                        container.containerBytes = containerArray[i].bytes;
+                                        containers[i+1]= container;
+                                        container = null;
+                                    }
+
+                                    callback(containers);
+                                    containerArray = null;
+                                    containers = null;
+                                }
+                                else callback(null);
+                            }
+                        );
+                    });
                 }
                 else callback(null);
             }
