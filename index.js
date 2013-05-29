@@ -23,7 +23,7 @@ var app = express ();
 app.use(express.compress());
 app.disable('x-powered-by');
 
-//-------------------------------------------------
+//------------------------------------------------- '/' '/mr'
 
 app.get('/', function(req, res) {
 
@@ -36,7 +36,7 @@ app.get('/mr', function(req, res){
     res.redirect('http://www.minreklame.dk', 307);
 });
 
-//------------------------------------------------
+//------------------------------------------------ '/image'
 
 var resizeImage =  require('./ImageIO/ResizeImage');
 var path        =  require('path');
@@ -78,7 +78,7 @@ app.get('/image', function(req, res){
     }
 });
 
-//------------------------------------------------------
+//------------------------------------------------------ '/debug'
 
 var catalogMetaData = require('./Data/CatalogMetaData');
 
@@ -100,7 +100,7 @@ app.get('/debug', function(req, res){
     );
 });
 
-//------------------------------------------------------
+//------------------------------------------------------ '/api'
 
 var cdnAPI = require('./CDN/CDN_API');
 
