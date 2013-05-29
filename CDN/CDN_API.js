@@ -202,7 +202,7 @@ exports.containerList = function containerList (callback) {
 
     getContainerList(function(containerList){
         callback(containerList);
-    })
+    });
 }
 
 function getContainerList (callback) {
@@ -238,6 +238,10 @@ function getContainerList (callback) {
                     containerArray = null;
                     containers = null;
                 }
+                else if (response.statusCode == 204) {
+
+                    callback(null);
+                }
                 else if (response.statusCode == 401) {
 
                     authenticate(function(authInfoFresh) {
@@ -247,7 +251,7 @@ function getContainerList (callback) {
                                 method:'GET',
                                 uri:api.storageURL+'?format=json',
                                 headers:{
-                                    'X-Auth-Token':api.authToken
+                                    'X-Auth-Token':authInfoFresh.authToken
                                 }
                             }
                             , function (error, response, body) {
@@ -282,4 +286,71 @@ function getContainerList (callback) {
 
     });
 
+}
+
+//--------------------------------------------------------------------------------
+
+// Get Container details
+
+exports.containerDetails = function containerDetails (containerName,callback) {
+
+    getContainerDetails(containerName,function(containerDetails){
+        callback(containerDetails);
+    });
+}
+
+function getContainerDetails (containerName, callback) {
+
+    getAuthInfo(function (api) {
+
+        request(
+            {
+                method:'HEAD',
+                uri:api.storageURL+'/'+containerName+'?format=json',
+                headers:{
+                    'X-Auth-Token':api.authToken
+                }
+            }
+            , function (error, response, body) {
+
+                if (response.statusCode == 204) {
+
+                    var containerDetails = {};
+                    containerDetails.objectsCount = response.headers['x-container-object-count'];
+                    containerDetails.bytesUsed    = response.headers['x-container-bytes-used'];
+                    callback(containerDetails);
+                    containerDetails = null;
+                }
+                else if (response.statusCode == 401) {
+
+                    authenticate(function(authInfoFresh) {
+
+                        request(
+                            {
+                                method:'HEAD',
+                                uri:api.storageURL+'/'+containerName+'?format=json',
+                                headers:{
+                                    'X-Auth-Token':authInfoFresh.authToken
+                                }
+                            }
+                            , function (error, response, body) {
+
+                                if (response.statusCode == 204) {
+
+                                    var containerDetails = {};
+                                    containerDetails.objectsCount = response.headers['x-container-object-count'];
+                                    containerDetails.bytesUsed    = response.headers['x-container-bytes-used'];
+                                    callback(containerDetails);
+                                    containerDetails = null;
+                                }
+                                else callback(null);
+                            }
+                        );
+                    });
+                }
+                else callback(null);
+            }
+        );
+
+    });
 }

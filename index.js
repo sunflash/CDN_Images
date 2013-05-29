@@ -106,13 +106,13 @@ var cdnAPI = require('./CDN/CDN_API');
 
 app.get('/api', function(req, res) {
 
-    cdnAPI.containerList(function(data) {
+    cdnAPI.containerDetails(req.query.name, function(data) {
 
         if (data)   res.json(data);
         else        res.send(404,"Aaaa ooo!");
 
         res.end();
-    })
+    });
 });
 
 
