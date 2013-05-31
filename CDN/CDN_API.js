@@ -290,12 +290,40 @@ function getContainerList (callback) {
 
 //--------------------------------------------------------------------------------
 
+// URL encode container and objects name, cut to under 256 byte string and replace '/' with '_'
+
+function encodeContainerName (containerName, callback) {
+
+    if (containerName) {
+
+        if (containerName.length > 0) {
+
+            containerName = containerName.replace(/\//g,'_');
+            containerName = encodeURIComponent(containerName);
+
+            if (containerName.length > 250) {
+                containerName = containerName.substr(0,250);
+            }
+
+            callback(containerName);
+        }
+        else callback(null);
+    }
+    else callback(null);
+}
+
+
+//--------------------------------------------------------------------------------
+
 // Get Container details
 
 exports.containerDetails = function containerDetails (containerName,callback) {
 
-    getContainerDetails(containerName,function(containerDetails){
-        callback(containerDetails);
+    encodeContainerName(containerName, function (encodedContainerName) {
+
+        getContainerDetails(encodedContainerName,function(containerDetails){
+            callback(containerDetails);
+        });
     });
 }
 
@@ -352,5 +380,78 @@ function getContainerDetails (containerName, callback) {
             }
         );
 
+    });
+}
+
+//--------------------------------------------------------------------------------
+
+// Create new container
+
+exports.createContainer = function createContainer (containerName, metaData, callback) {
+
+    encodeContainerName(containerName, function (encodedContainerName) {
+
+        createCloudFileContainer(encodedContainerName, metaData, function (statusCode) {
+            callback(statusCode);
+        });
+    });
+}
+
+function createCloudFileContainer (containerName, metaData, callback) {
+
+    getAuthInfo(function (api) {
+
+        metaData = {'X-Container-Meta-Hello': 'word','X-Container-Meta-Robo': 'cop'};
+
+        var headerValues = {};
+        if (metaData) headerValues = metaData;
+        headerValues['X-Auth-Token'] = api.authToken;
+
+        request(
+            {
+                method:'PUT',
+                uri:api.storageURL+'/'+containerName,
+                headers:headerValues
+            }
+            , function (error, response, body) {
+
+                if (response.statusCode == 201) {
+
+                    callback(1);
+                }
+                else if (response.statusCode == 202) {
+
+                    callback(2);
+                }
+                else if (response.statusCode == 401) {
+
+                    authenticate(function(authInfoFresh) {
+
+                        headerValues['X-Auth-Token'] = authInfoFresh.authToken;
+
+                        request(
+                            {
+                                method:'PUT',
+                                uri:api.storageURL+'/'+containerName,
+                                headers:headerValues
+                            }
+                            , function (error, response, body) {
+
+                                if (response.statusCode == 201) {
+
+                                    callback(1);
+                                }
+                                else if (response.statusCode == 202) {
+
+                                    callback(2);
+                                }
+                                else callback(null);
+                            }
+                        );
+                    });
+                }
+                else callback(null);
+            }
+        );
     });
 }
