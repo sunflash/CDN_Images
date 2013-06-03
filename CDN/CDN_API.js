@@ -499,3 +499,77 @@ function createCloudFileContainer (containerName, metaData, callback) {
         );
     });
 }
+
+//--------------------------------------------------------------------------------
+
+exports.setUpdateContainerMetaData = function setUpdateContainerMetaData (containerName, metaData, callback) {
+
+    metaData = {'x-container-meta-hello':'world','x-container-meta-robo':'cup','x-container-meta-Guitar':'Hero'};
+
+    if (metaData) {
+
+        encodeContainerName(containerName, function (encodedContainerName) {
+
+            setUpdateCloudFileContainerMetaData(encodedContainerName, metaData, function (statusCode) {
+                callback(statusCode);
+            });
+        });
+    }
+    else callback(null);
+}
+
+function setUpdateCloudFileContainerMetaData (containerName, metaData, callback) {
+
+    getAuthInfo(function (api) {
+
+        var headerValues = {};
+        if (metaData) headerValues = metaData;
+        headerValues['X-Auth-Token'] = api.authToken;
+
+        request(
+            {
+                method:'POST',
+                uri:api.storageURL+'/'+containerName,
+                headers:headerValues
+            }
+            , function (error, response, body) {
+
+                if (response.statusCode == 204) {
+                    callback(1);
+                }
+                else if (response.statusCode == 404) {
+                    callback(null);
+                }
+                else if (response.statusCode == 401) {
+
+                    authenticate(function(authInfoFresh) {
+
+                        headerValues['X-Auth-Token'] = authInfoFresh.authToken;
+
+                        request(
+                            {
+                                method:'POST',
+                                uri:api.storageURL+'/'+containerName,
+                                headers:headerValues
+                            }
+                            , function (error, response, body) {
+
+                                if (response.statusCode == 204) {
+                                    callback(1);
+                                }
+                                else if (response.statusCode == 404) {
+                                    callback(null);
+                                }
+                                else callback(null);
+                            }
+                        );
+                    });
+                }
+                else callback(null);
+
+                headerValues = null;
+            }
+        );
+    });
+}
+

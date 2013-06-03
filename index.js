@@ -106,14 +106,31 @@ var cdnAPI = require('./CDN/CDN_API');
 
 app.get('/api', function(req, res) {
 
-    cdnAPI.containerDetails(req.query.name,function(data) {
+    if(req.query.mode){
 
-        if (data)   res.json(data);
-        else        res.send(404,"Aaaa ooo!");
+        if (req.query.mode == 'containerDetails') {
 
-        res.end();
-    });
+            cdnAPI.containerDetails(req.query.name,function(data) {
+                outputDataJSON(data,res);
+            });
+        }
+        else if (req.query.mode == 'setUpdateContainerMetaData') {
+
+            cdnAPI.setUpdateContainerMetaData(req.query.name,null,function(data) {
+                outputDataJSON(data,res);
+            });
+        }
+    }
+    else res.end();
 });
+
+function outputDataJSON (data,res) {
+
+    if (data)   res.json(data);
+    else        res.send(404,"Aaaa ooo!");
+
+    res.end();
+}
 
 
 app.listen(80);
