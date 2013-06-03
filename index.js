@@ -114,9 +114,9 @@ app.get('/api', function(req, res) {
                 outputDataJSON(data,res);
             });
         }
-        else if (req.query.mode == 'setUpdateContainerMetaData') {
+        else if (req.query.mode == 'setUpdateDeleteContainerMetaData') {
 
-            cdnAPI.setUpdateContainerMetaData(req.query.name,null,function(data) {
+            cdnAPI.setUpdateDeleteContainerMetaData(req.query.name,null,function(data) {
                 outputDataJSON(data,res);
             });
         }

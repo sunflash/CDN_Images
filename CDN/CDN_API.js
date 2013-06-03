@@ -502,15 +502,17 @@ function createCloudFileContainer (containerName, metaData, callback) {
 
 //--------------------------------------------------------------------------------
 
-exports.setUpdateContainerMetaData = function setUpdateContainerMetaData (containerName, metaData, callback) {
+// Set update and delete container meta data
+// Set, update : X-Container-Meta-Book: 'Hello world'
+// Delete      : X-Remove-Container-Meta-Name: foo
 
-    metaData = {'x-container-meta-hello':'world','x-container-meta-robo':'cup','x-container-meta-Guitar':'Hero'};
+exports.setUpdateDeleteContainerMetaData = function setUpdateDeleteContainerMetaDat (containerName, metaData, callback) {
 
     if (metaData) {
 
         encodeContainerName(containerName, function (encodedContainerName) {
 
-            setUpdateCloudFileContainerMetaData(encodedContainerName, metaData, function (statusCode) {
+            setUpdateDeleteCloudFileContainerMetaData(encodedContainerName, metaData, function (statusCode) {
                 callback(statusCode);
             });
         });
@@ -518,7 +520,7 @@ exports.setUpdateContainerMetaData = function setUpdateContainerMetaData (contai
     else callback(null);
 }
 
-function setUpdateCloudFileContainerMetaData (containerName, metaData, callback) {
+function setUpdateDeleteCloudFileContainerMetaData (containerName, metaData, callback) {
 
     getAuthInfo(function (api) {
 
