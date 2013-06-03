@@ -435,6 +435,12 @@ exports.createContainer = function createContainer (containerName, metaData, cal
     });
 }
 
+/* NOTICE :
+ you can have 4096 bytes maximum overall metadata, with 90 distinct metadata items at the most.
+ Each may have a 128 character name length with a 256 max value length each.
+ Any valid UTF-8 http header value is allowed for metadata.
+ */
+
 function createCloudFileContainer (containerName, metaData, callback) {
 
     getAuthInfo(function (api) {
