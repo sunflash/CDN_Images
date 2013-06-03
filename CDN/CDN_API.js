@@ -346,8 +346,27 @@ function getContainerDetails (containerName, callback) {
                     var containerDetails = {};
                     containerDetails.objectsCount = response.headers['x-container-object-count'];
                     containerDetails.bytesUsed    = response.headers['x-container-bytes-used'];
+
+                    var metaTag;
+                    var metaHeaderPrefix = 'x-container-meta-';
+                    var log = 'x-container-meta-access-log-delivery';
+
+                    for (x in response.headers) {
+
+                        if (x.indexOf(metaHeaderPrefix) != -1 && x != log) {
+
+                            if (!metaTag) metaTag = {};
+                            metaTag[x.substr(x.indexOf(metaHeaderPrefix)+metaHeaderPrefix.length, x.length-metaHeaderPrefix.length)] = response.headers[x];
+                        }
+                    }
+
+                    if (metaTag) containerDetails['metaTag'] = metaTag;
+
                     callback(containerDetails);
                     containerDetails = null;
+                    metaTag = null;
+                    metaHeaderPrefix = null;
+                    log = null;
                 }
                 else if (response.statusCode == 401) {
 
@@ -368,8 +387,27 @@ function getContainerDetails (containerName, callback) {
                                     var containerDetails = {};
                                     containerDetails.objectsCount = response.headers['x-container-object-count'];
                                     containerDetails.bytesUsed    = response.headers['x-container-bytes-used'];
+
+                                    var metaTag;
+                                    var metaHeaderPrefix = 'x-container-meta-';
+                                    var log = 'x-container-meta-access-log-delivery';
+
+                                    for (x in response.headers) {
+
+                                        if (x.indexOf(metaHeaderPrefix) != -1 && x != log) {
+
+                                            if (!metaTag) metaTag = {};
+                                            metaTag[x.substr(x.indexOf(metaHeaderPrefix)+metaHeaderPrefix.length, x.length-metaHeaderPrefix.length)] = response.headers[x];
+                                        }
+                                    }
+
+                                    if (metaTag) containerDetails['metaTag'] = metaTag;
+
                                     callback(containerDetails);
                                     containerDetails = null;
+                                    metaTag = null;
+                                    metaHeaderPrefix = null;
+                                    log = null;
                                 }
                                 else callback(null);
                             }
@@ -400,8 +438,6 @@ exports.createContainer = function createContainer (containerName, metaData, cal
 function createCloudFileContainer (containerName, metaData, callback) {
 
     getAuthInfo(function (api) {
-
-        metaData = {'X-Container-Meta-Hello': 'word','X-Container-Meta-Robo': 'cop'};
 
         var headerValues = {};
         if (metaData) headerValues = metaData;
@@ -451,6 +487,8 @@ function createCloudFileContainer (containerName, metaData, callback) {
                     });
                 }
                 else callback(null);
+
+                headerValues = null;
             }
         );
     });
