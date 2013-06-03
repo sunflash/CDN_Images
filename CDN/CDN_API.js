@@ -575,3 +575,7 @@ function setUpdateDeleteCloudFileContainerMetaData (containerName, metaData, cal
     });
 }
 
+//--------------------------------------------------------------------------------
+
+// List objects in container
+

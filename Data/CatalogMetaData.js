@@ -120,18 +120,19 @@ exports.getCatalogData = function getCatalogData (callBack) {
                     catalog.iPaperLink  = activeCatalogArray[i-1].path;
 
                     activeCatalogs[i] = catalog;
-                    catalog = null;
-                    pageCount = null;
-                    pubID = null;
 
                     if (pageCount == 0) {
-                        console.log("Error, catalog "+pubID+ " have NO pages.");
+                        console.log("!!! Error, catalog "+pubID+ " have NO pages.");
                     }
                     else if ( (pageCount%2) == 1) {
 
                         //console.log("!!! catalog "+pubID+ " have odd pages "+pageCount);
                     }
                     //else {console.log("Catalog "+pubID+" have "+pageCount+" pages.");}
+
+                    catalog = null;
+                    pageCount = null;
+                    pubID = null;
                 }
 
                 downloadImages.downloadActiveCatalogImage(activeCatalogs,activeCatalogArray.length);
