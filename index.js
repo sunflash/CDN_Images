@@ -120,6 +120,12 @@ app.get('/api', function(req, res) {
                 outputDataJSON(data,res);
             });
         }
+        else if (req.query.mode == 'getContainerObjects') {
+
+            cdnAPI.getContainerObjects(req.query.name, function(data) {
+                outputDataJSON(data,res);
+            });
+        }
     }
     else res.end();
 });
