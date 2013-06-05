@@ -577,128 +577,165 @@ function setUpdateDeleteCloudFileContainerMetaData (containerName, metaData, cal
 
 //--------------------------------------------------------------------------------
 
-// List objects in container, max 10000
+// List objects in container, max 10000 objects for each fetch
 
 exports.getContainerObjects = function getContainerObjects (containerName, callback) {
 
-    encodeContainerName(containerName, function (encodedContainerName) {
+    if (containerName) {
 
-        getCloudFileContainerObjects(encodedContainerName, function (objectsList) {
-            callback(objectsList);
+        encodeContainerName(containerName, function (encodedContainerName) {
+
+            getCloudFileContainerObjects(encodedContainerName,null,function (objectsList) {
+                callback(objectsList);
+            });
         });
+    }
+    else callback(null);
+}
+
+function getCloudFileContainerObjects (containerName, maxObjectsFetchLimit, callback) {
+
+    if (!maxObjectsFetchLimit || maxObjectsFetchLimit > 10000) maxObjectsFetchLimit = 10000;
+
+    getContainerDetails(containerName, function (containerDetails) {
+
+        if (containerDetails) {
+
+            var objectsCount = parseInt(containerDetails.objectsCount);
+            var maxRound     = Math.ceil(objectsCount/maxObjectsFetchLimit);
+
+            getCloudFileContainerObjectsInChunk(containerName,maxObjectsFetchLimit,maxRound,null,null,null,function(containerObjects) {
+
+                callback(containerObjects);
+
+                objectsCount = null;
+                maxRound     = null;
+            });
+        }
+        else callback(null);
     });
 }
 
-function getCloudFileContainerObjects (containerName, callback) {
+function getCloudFileContainerObjectsInChunk (containerName,maxObjectsFetchLimit,maxRound,round,marker,objects,callback) {
 
-    getAuthInfo(function (api) {
+    if (!maxObjectsFetchLimit || maxObjectsFetchLimit > 10000) maxObjectsFetchLimit = 10000;
+    if (!objects) objects = [];
+    if (!round)   round  = 0;
 
-        request(
-            {
-                method:'GET',
-                uri:api.storageURL+'/'+containerName+'?format=json',
-                headers:{
-                    'X-Auth-Token': api.authToken
-                }
-            }
-            , function (error, response, body) {
+    if (round < maxRound) {
 
-                if (response.statusCode == 200) {
+        getAuthInfo(function (api) {
 
-                    var objectsArray =  JSON.parse(body);
+            var url = api.storageURL+'/'+containerName+'?format=json'+'&limit='+maxObjectsFetchLimit;
+            if (marker) url = url + '&marker=' + marker;
 
-                    if (objectsArray.length > 0) {
-
-                        var objects = {};
-
-                        for (var i = 0; i < objectsArray.length; i++) {
-
-                            var object = {};
-                            object.name         = objectsArray[i].name;
-                            object.contentType  = objectsArray[i].content_type;
-                            object.bytes        = objectsArray[i].bytes;
-                            object.lastModified = objectsArray[i].last_modified;
-                            object.hash         = objectsArray[i].hash;
-                            objects[i+1]        = object;
-                            object              = null;
-                        }
-
-                        callback(objects);
-                        objects = null;
+            request(
+                {
+                    method:'GET',
+                    uri:url,
+                    headers:{
+                        'X-Auth-Token': api.authToken
                     }
-                    else callback(null);
-
-                    objectsArray  = null;
                 }
-                else if (response.statusCode == 204) {
+                , function (error, response, body) {
 
-                    //console.log('NO objects in container');
-                    callback(null);
-                }
-                else if (response.statusCode == 404) {
+                    if (response.statusCode == 200) {
 
-                    //console.log('container not exist');
-                    callback(null);
-                }
-                else if (response.statusCode == 401) {
+                        var objectsArray =  JSON.parse(body);
 
-                    authenticate(function(authInfoFresh) {
+                        if (objectsArray.length > 0) {
 
-                        request(
-                            {
-                                method:'GET',
-                                uri:api.storageURL+'/'+containerName+'?format=json',
-                                headers:{
-                                    'X-Auth-Token': authInfoFresh.authToken
-                                }
+                            objects = objects.concat(objectsArray);
+
+                            round++;
+                            if (round < maxRound) {
+                                marker = null;
+                                var lastObjectName = objectsArray[objectsArray.length-1].name;
+                                getCloudFileContainerObjectsInChunk(containerName,maxObjectsFetchLimit,maxRound,round,lastObjectName,objects,callback);
                             }
-                            , function (error, response, body) {
+                            else if (round == maxRound) {
+                                callback(objects);
+                                marker = null;
+                            }
+                        }
+                        else callback(null);
 
-                                if (response.statusCode == 200) {
+                        objectsArray  = null;
+                        url = null;
+                    }
+                    else if (response.statusCode == 204) {
 
-                                    var objectsArray =  JSON.parse(body);
+                        //console.log('NO objects in container');
+                        callback(null);
+                        url = null;
+                    }
+                    else if (response.statusCode == 404) {
 
-                                    if (objectsArray.length > 0) {
+                        //console.log('container not exist');
+                        callback(null);
+                        url = null;
+                    }
+                    else if (response.statusCode == 401) {
 
-                                        var objects = {};
+                        authenticate(function(authInfoFresh) {
 
-                                        for (var i = 0; i < objectsArray.length; i++) {
+                            request(
+                                {
+                                    method:'GET',
+                                    uri:url,
+                                    headers:{
+                                        'X-Auth-Token': authInfoFresh.authToken
+                                    }
+                                }
+                                , function (error, response, body) {
 
-                                            var object = {};
-                                            object.name         = objectsArray[i].name;
-                                            object.contentType  = objectsArray[i].content_type;
-                                            object.bytes        = objectsArray[i].bytes;
-                                            object.lastModified = objectsArray[i].last_modified;
-                                            object.hash         = objectsArray[i].hash;
-                                            objects[i+1]        = object;
-                                            object              = null;
+                                    if (response.statusCode == 200) {
+
+                                        var objectsArray =  JSON.parse(body);
+
+                                        if (objectsArray.length > 0) {
+
+                                            objects = objects.concat(objectsArray);
+
+                                            round++;
+                                            if (round < maxRound) {
+                                                marker = null;
+                                                var lastObjectName = objectsArray[objectsArray.length-1].name;
+                                                getCloudFileContainerObjectsInChunk(containerName,maxObjectsFetchLimit,maxRound,round,lastObjectName,objects,callback);
+                                            }
+                                            else if (round == maxRound) {
+                                                callback(objects);
+                                                marker = null;
+                                            }
                                         }
+                                        else callback(null);
 
-                                        callback(objects);
-                                        objects = null;
+                                        objectsArray  = null;
+                                        url = null;
+                                    }
+                                    else if (response.statusCode == 204) {
+
+                                        //console.log('NO objects in container');
+                                        callback(null);
+                                        url = null;
+                                    }
+                                    else if (response.statusCode == 404) {
+
+                                        //console.log('container not exist');
+                                        callback(null);
+                                        url = null;
                                     }
                                     else callback(null);
-
-                                    objectsArray  = null;
                                 }
-                                else if (response.statusCode == 204) {
-
-                                    //console.log('NO objects in container');
-                                    callback(null);
-                                }
-                                else if (response.statusCode == 404) {
-
-                                    //console.log('container not exist');
-                                    callback(null);
-                                }
-                                else callback(null);
-                            }
-                        );
-                    });
+                            );
+                        });
+                    }
+                    else callback(null);
                 }
-                else callback(null);
-            }
-        );
-    });
-
+            );
+        });
+    }
+    else callback(null);
 }
+
+//--------------------------------------------------------------------------------
