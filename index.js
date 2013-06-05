@@ -126,6 +126,12 @@ app.get('/api', function(req, res) {
                 outputDataJSON(data,res);
             });
         }
+        else if (req.query.mode == 'containerList') {
+
+            cdnAPI.containerList(function(data) {
+               outputDataJSON(data,res);
+            });
+        }
     }
     else res.end();
 });

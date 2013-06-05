@@ -200,92 +200,136 @@ function getAccountDetails (callback) {
 
 exports.containerList = function containerList (callback) {
 
-    getContainerList(function(containerList){
+    getContainerList(null,function(containerList){
         callback(containerList);
     });
 }
 
-function getContainerList (callback) {
+function getContainerList (maxContainersFetchLimit, callback) {
 
-    getAuthInfo(function (api) {
+    if (!maxContainersFetchLimit || maxContainersFetchLimit > 10000) maxContainersFetchLimit = 10000;
 
-        request(
-            {
-                method:'GET',
-                uri:api.storageURL+'?format=json',
-                headers:{
-                    'X-Auth-Token':api.authToken
-                }
-            }
-            , function (error, response, body) {
+    getAccountDetails(function (accountDetails) {
 
-                if (response.statusCode == 200) {
+        if (accountDetails) {
 
-                    var containerArray =  JSON.parse(body);
-                    var containers = {};
+            var containersCount = parseInt(accountDetails.containerCount);
+            var maxRound     = Math.ceil(containersCount/maxContainersFetchLimit);
 
-                    for (var i = 0; i < containerArray.length; i++) {
+           getContainerListInChunk(maxContainersFetchLimit,maxRound,null,null,null,function(containerObjects) {
 
-                        var container = {};
-                        container.containerName  = containerArray[i].name;
-                        container.objectsCount = containerArray[i].count;
-                        container.containerBytes = containerArray[i].bytes;
-                        containers[i+1]= container;
-                        container = null;
-                    }
+                callback(containerObjects);
 
-                    callback(containers);
-                    containerArray = null;
-                    containers = null;
-                }
-                else if (response.statusCode == 204) {
-
-                    callback(null);
-                }
-                else if (response.statusCode == 401) {
-
-                    authenticate(function(authInfoFresh) {
-
-                        request(
-                            {
-                                method:'GET',
-                                uri:api.storageURL+'?format=json',
-                                headers:{
-                                    'X-Auth-Token':authInfoFresh.authToken
-                                }
-                            }
-                            , function (error, response, body) {
-
-                                if (response.statusCode == 200) {
-
-                                    var containerArray =  JSON.parse(body);
-                                    var containers = {};
-
-                                    for (var i = 0; i < containerArray.length; i++) {
-
-                                        var container = {};
-                                        container.containerName  = containerArray[i].name;
-                                        container.objectsCount = containerArray[i].count;
-                                        container.containerBytes = containerArray[i].bytes;
-                                        containers[i+1]= container;
-                                        container = null;
-                                    }
-
-                                    callback(containers);
-                                    containerArray = null;
-                                    containers = null;
-                                }
-                                else callback(null);
-                            }
-                        );
-                    });
-                }
-                else callback(null);
-            }
-        );
-
+                containersCount = null;
+                maxRound        = null;
+            });
+        }
+        else callback(null);
     });
+}
 
+function getContainerListInChunk (maxContainersFetchLimit,maxRound,round,marker,containers,callback) {
+
+    if (!maxContainersFetchLimit || maxContainersFetchLimit > 10000) maxContainersFetchLimit = 10000;
+    if (!containers) containers = [];
+    if (!round)      round  = 0;
+
+    if (round < maxRound) {
+
+        getAuthInfo(function (api) {
+
+            var url = api.storageURL+'?format=json'+'&limit='+maxContainersFetchLimit;
+            if (marker) url = url + '&marker=' + marker;
+
+            request(
+                {
+                    method:'GET',
+                    uri:url,
+                    headers:{
+                        'X-Auth-Token':api.authToken
+                    }
+                }
+                , function (error, response, body) {
+
+                    if (response.statusCode == 200) {
+
+                        var containerArray = JSON.parse(body);
+
+                        if (containerArray.length > 0) {
+
+                            containers = containers.concat(containerArray);
+
+                            round++;
+                            if (round < maxRound) {
+                                marker = null;
+                                var lastContainerName = containerArray[containerArray.length-1].name;
+                                getContainerListInChunk (maxContainersFetchLimit,maxRound,round,lastContainerName,containers,callback);
+                            }
+                            else if (round == maxRound) {
+                                callback(containers);
+                                marker = null;
+                            }
+                        }
+                        else callback(null);
+
+                        containerArray  = null;
+                        url = null;
+                    }
+                    else if (response.statusCode == 204) {
+
+                        callback(null);
+                        url = null;
+                    }
+                    else if (response.statusCode == 401) {
+
+                        authenticate(function(authInfoFresh) {
+
+                            request(
+                                {
+                                    method:'GET',
+                                    uri:url,
+                                    headers:{
+                                        'X-Auth-Token':authInfoFresh.authToken
+                                    }
+                                }
+                                , function (error, response, body) {
+
+                                    if (response.statusCode == 200) {
+
+                                        var containerArray = JSON.parse(body);
+
+                                        if (containerArray.length > 0) {
+
+                                            containers = containers.concat(containerArray);
+
+                                            round++;
+                                            if (round < maxRound) {
+                                                marker = null;
+                                                var lastContainerName = containerArray[containerArray.length-1].name;
+                                                getContainerListInChunk (maxContainersFetchLimit,maxRound,round,lastContainerName,containers,callback);
+                                            }
+                                            else if (round == maxRound) {
+                                                callback(containers);
+                                                marker = null;
+                                            }
+                                        }
+                                        else callback(null);
+
+                                        containerArray  = null;
+                                        url = null;
+                                    }
+                                    else callback(null);
+                                }
+                            );
+                        });
+                    }
+                    else callback(null);
+                }
+            );
+
+        });
+    }
+    else callback(null);
 }
 
 //--------------------------------------------------------------------------------
