@@ -32,13 +32,6 @@ exports.accountDetails = function accountDetails (callback) {
     });
 }
 
-exports.containerList = function containerList (callback) {
-
-    getContainerList(null,function(containerList){
-        callback(containerList);
-    });
-}
-
 exports.containerDetails = function containerDetails (containerName,callback) {
 
     if (containerName && containerName.length > 0) {
@@ -51,6 +44,13 @@ exports.containerDetails = function containerDetails (containerName,callback) {
         });
     }
     else callback(null);
+}
+
+exports.containerList = function containerList (callback) {
+
+    getContainerList(null,function(containerList){
+        callback(containerList);
+    });
 }
 
 exports.createContainer = function createContainer (containerName, metaData, callback) {
@@ -97,7 +97,14 @@ exports.getContainerObjects = function getContainerObjects (containerName, callb
 
 exports.deleteSingleObject = function deleteSingleObject (containerName, objectName, callback) {
 
+    if (containerName && objectName) {
 
+        if(containerName.length > 0 && objectName.length > 0) {
+
+        }
+        else callback(null);
+    }
+    else callback(null);
 }
 
 //--------------------------------------------------------------------------------
