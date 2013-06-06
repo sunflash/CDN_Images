@@ -16,6 +16,116 @@ var authLink = 'https://lon.identity.api.rackspacecloud.com/v1.0';
 
 //--------------------------------------------------------------------------------
 
+// Export Module functions
+
+exports.authDetails = function authDetails (callback) {
+
+    getAuthInfo(function (api) {
+        callback(api);
+    });
+}
+
+exports.accountDetails = function accountDetails (callback) {
+
+    getAccountDetails(function (accountDetails) {
+        callback(accountDetails);
+    });
+}
+
+exports.containerList = function containerList (callback) {
+
+    getContainerList(null,function(containerList){
+        callback(containerList);
+    });
+}
+
+exports.containerDetails = function containerDetails (containerName,callback) {
+
+    if (containerName && containerName.length > 0) {
+
+        encodeContainerName(containerName, function (encodedContainerName) {
+
+            getContainerDetails(encodedContainerName,function(containerDetails){
+                callback(containerDetails);
+            });
+        });
+    }
+    else callback(null);
+}
+
+exports.createContainer = function createContainer (containerName, metaData, callback) {
+
+    if (containerName && containerName.length > 0) {
+
+        encodeContainerName(containerName, function (encodedContainerName) {
+
+            createCloudFileContainer(encodedContainerName, metaData, function (statusCode) {
+                callback(statusCode);
+            });
+        });
+    }
+    else callback(null);
+}
+
+exports.setUpdateDeleteContainerMetaData = function setUpdateDeleteContainerMetaDat (containerName, metaData, callback) {
+
+    if (metaData && containerName && containerName.length > 0) {
+
+        encodeContainerName(containerName, function (encodedContainerName) {
+
+            setUpdateDeleteCloudFileContainerMetaData(encodedContainerName, metaData, function (statusCode) {
+                callback(statusCode);
+            });
+        });
+    }
+    else callback(null);
+}
+
+exports.getContainerObjects = function getContainerObjects (containerName, callback) {
+
+    if (containerName && containerName.length > 0) {
+
+        encodeContainerName(containerName, function (encodedContainerName) {
+
+            getCloudFileContainerObjects(encodedContainerName,null,function (objectsList) {
+                callback(objectsList);
+            });
+        });
+    }
+    else callback(null);
+}
+
+exports.deleteSingleObject = function deleteSingleObject (containerName, objectName, callback) {
+
+
+}
+
+//--------------------------------------------------------------------------------
+
+// URL encode container and objects name, cut to under 256 byte string and replace '/' with '_'
+
+function encodeContainerName (containerName, callback) {
+
+    if (containerName) {
+
+        if (containerName.length > 0) {
+
+            containerName = containerName.replace(/\//g,'_');
+            containerName = encodeURIComponent(containerName);
+
+            if (containerName.length > 250) {
+                containerName = containerName.substr(0,250);
+            }
+
+            callback(containerName);
+        }
+        else callback(null);
+    }
+    else callback(null);
+}
+
+//--------------------------------------------------------------------------------
+
 // Authentication to rackspace CDN
 
 var authInfo = {};
@@ -116,23 +226,9 @@ function getAuthInfoFromRedis(callback) {
     });
 }
 
-exports.authDetails = function authDetails (callback) {
-
-    getAuthInfo(function (api) {
-        callback(api);
-    });
-}
-
 //--------------------------------------------------------------------------------
 
 // Get Cloud Files account details
-
-exports.accountDetails = function accountDetails (callback) {
-
-    getAccountDetails(function (accountDetails) {
-       callback(accountDetails);
-    });
-}
 
 function getAccountDetails (callback) {
 
@@ -196,14 +292,7 @@ function getAccountDetails (callback) {
 
 //--------------------------------------------------------------------------------
 
-// Get list of container in json, max 10000
-
-exports.containerList = function containerList (callback) {
-
-    getContainerList(null,function(containerList){
-        callback(containerList);
-    });
-}
+// Get list of container in json, max 10000 containers for each fetch
 
 function getContainerList (maxContainersFetchLimit, callback) {
 
@@ -334,42 +423,7 @@ function getContainerListInChunk (maxContainersFetchLimit,maxRound,round,marker,
 
 //--------------------------------------------------------------------------------
 
-// URL encode container and objects name, cut to under 256 byte string and replace '/' with '_'
-
-function encodeContainerName (containerName, callback) {
-
-    if (containerName) {
-
-        if (containerName.length > 0) {
-
-            containerName = containerName.replace(/\//g,'_');
-            containerName = encodeURIComponent(containerName);
-
-            if (containerName.length > 250) {
-                containerName = containerName.substr(0,250);
-            }
-
-            callback(containerName);
-        }
-        else callback(null);
-    }
-    else callback(null);
-}
-
-
-//--------------------------------------------------------------------------------
-
 // Get Container details
-
-exports.containerDetails = function containerDetails (containerName,callback) {
-
-    encodeContainerName(containerName, function (encodedContainerName) {
-
-        getContainerDetails(encodedContainerName,function(containerDetails){
-            callback(containerDetails);
-        });
-    });
-}
 
 function getContainerDetails (containerName, callback) {
 
@@ -469,16 +523,6 @@ function getContainerDetails (containerName, callback) {
 
 // Create new container
 
-exports.createContainer = function createContainer (containerName, metaData, callback) {
-
-    encodeContainerName(containerName, function (encodedContainerName) {
-
-        createCloudFileContainer(encodedContainerName, metaData, function (statusCode) {
-            callback(statusCode);
-        });
-    });
-}
-
 /* NOTICE :
  you can have 4096 bytes maximum overall metadata, with 90 distinct metadata items at the most.
  Each may have a 128 character name length with a 256 max value length each.
@@ -550,20 +594,6 @@ function createCloudFileContainer (containerName, metaData, callback) {
 // Set, update : X-Container-Meta-Book: 'Hello world'
 // Delete      : X-Remove-Container-Meta-Name: foo
 
-exports.setUpdateDeleteContainerMetaData = function setUpdateDeleteContainerMetaDat (containerName, metaData, callback) {
-
-    if (metaData) {
-
-        encodeContainerName(containerName, function (encodedContainerName) {
-
-            setUpdateDeleteCloudFileContainerMetaData(encodedContainerName, metaData, function (statusCode) {
-                callback(statusCode);
-            });
-        });
-    }
-    else callback(null);
-}
-
 function setUpdateDeleteCloudFileContainerMetaData (containerName, metaData, callback) {
 
     getAuthInfo(function (api) {
@@ -622,20 +652,6 @@ function setUpdateDeleteCloudFileContainerMetaData (containerName, metaData, cal
 //--------------------------------------------------------------------------------
 
 // List objects in container, max 10000 objects for each fetch
-
-exports.getContainerObjects = function getContainerObjects (containerName, callback) {
-
-    if (containerName) {
-
-        encodeContainerName(containerName, function (encodedContainerName) {
-
-            getCloudFileContainerObjects(encodedContainerName,null,function (objectsList) {
-                callback(objectsList);
-            });
-        });
-    }
-    else callback(null);
-}
 
 function getCloudFileContainerObjects (containerName, maxObjectsFetchLimit, callback) {
 
@@ -783,3 +799,5 @@ function getCloudFileContainerObjectsInChunk (containerName,maxObjectsFetchLimit
 }
 
 //--------------------------------------------------------------------------------
+
+// Delete single object, one at a time
