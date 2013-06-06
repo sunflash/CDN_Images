@@ -845,7 +845,57 @@ function getCloudFileContainerObjectsInChunk (containerName,maxObjectsFetchLimit
 
 function deleteSingleObjectInCloudFileContainer (containerName, objectName, callback) {
 
-    var objectPath = '/'+containerName+'/'+objectName;
+    getAuthInfo(function (api) {
 
-    callback(objectPath);
+        request(
+            {
+                method:'DELETE',
+                uri:api.storageURL+'/'+containerName+'/'+objectName,
+                headers:{
+                    'X-Auth-Token': api.authToken
+                }
+            }
+            , function (error, response, body) {
+
+                if (response.statusCode == 204) {
+
+                    callback(1);
+                }
+                else if (response.statusCode == 404) {
+
+                    //console.log('Object not exist A');
+                    callback(null);
+                }
+                else if (response.statusCode == 401) {
+
+                    authenticate(function(authInfoFresh) {
+
+                        request(
+                            {
+                                method:'DELETE',
+                                uri:api.storageURL+'/'+containerName+'/'+objectName,
+                                headers:{
+                                    'X-Auth-Token': authInfoFresh.authToken
+                                }
+                            }
+                            , function (error, response, body) {
+
+                                if (response.statusCode == 204) {
+
+                                    callback(1);
+                                }
+                                else if (response.statusCode == 404) {
+
+                                    //console.log('Object not exist B');
+                                    callback(null);
+                                }
+                                else callback(null);
+                            }
+                        );
+                    });
+                }
+                else callback(null);
+            }
+        );
+    });
 }
