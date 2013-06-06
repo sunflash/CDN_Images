@@ -106,17 +106,52 @@ var cdnAPI = require('./CDN/CDN_API');
 
 app.get('/api', function(req, res) {
 
-    if(req.query.mode){
+    if(req.query.mode) {
 
-        if (req.query.mode == 'containerDetails') {
+        if (req.query.mode == 'authDetails') {
+
+            cdnAPI.authDetails(function (data) {
+                outputDataJSON(data,res);
+            });
+        }
+        else if (req.query.mode == 'accountDetails') {
+
+            cdnAPI.accountDetails(function (data) {
+                outputDataJSON(data,res);
+            });
+        }
+        else if (req.query.mode == 'containerDetails') {
 
             cdnAPI.containerDetails(req.query.containerName,function(data) {
                 outputDataJSON(data,res);
             });
         }
+        else if (req.query.mode == 'containerList') {
+
+            cdnAPI.containerList(function(data) {
+                outputDataJSON(data,res);
+            });
+        }
+        else if (req.query.mode == 'createContainer') {
+
+            // Set metadata : X-Container-Meta-Book: 'Hello world'
+
+            var metaData;
+            //metaData = {'X-Container-Meta-Ghost': 'Buster', 'X-Container-Meta-super': 'man'};
+
+            cdnAPI.createContainer(req.query.containerName, metaData, function(data) {
+                outputDataJSON(data,res);
+            });
+        }
         else if (req.query.mode == 'setUpdateDeleteContainerMetaData') {
 
-            cdnAPI.setUpdateDeleteContainerMetaData(req.query.containerName,null,function(data) {
+            // Set, update : X-Container-Meta-Book: 'Hello world'
+            // Delete      : X-Remove-Container-Meta-Name: foo
+
+            var metaData;
+            metaData = {'X-Remove-Container-Meta-Ghost': 'Buster', 'X-Container-Meta-Iron': 'man'};
+
+                cdnAPI.setUpdateDeleteContainerMetaData(req.query.containerName,metaData,function(data) {
                 outputDataJSON(data,res);
             });
         }
@@ -124,12 +159,6 @@ app.get('/api', function(req, res) {
 
             cdnAPI.getContainerObjects(req.query.containerName, function(data) {
                 outputDataJSON(data,res);
-            });
-        }
-        else if (req.query.mode == 'containerList') {
-
-            cdnAPI.containerList(function(data) {
-               outputDataJSON(data,res);
             });
         }
         else if (req.query.mode == 'deleteSingleObject') {

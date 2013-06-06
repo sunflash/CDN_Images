@@ -568,6 +568,8 @@ function getContainerDetails (containerName, callback) {
  Any valid UTF-8 http header value is allowed for metadata.
  */
 
+// Set metadata : X-Container-Meta-Book: 'Hello world'
+
 function createCloudFileContainer (containerName, metaData, callback) {
 
     getAuthInfo(function (api) {
