@@ -110,19 +110,19 @@ app.get('/api', function(req, res) {
 
         if (req.query.mode == 'containerDetails') {
 
-            cdnAPI.containerDetails(req.query.name,function(data) {
+            cdnAPI.containerDetails(req.query.containerName,function(data) {
                 outputDataJSON(data,res);
             });
         }
         else if (req.query.mode == 'setUpdateDeleteContainerMetaData') {
 
-            cdnAPI.setUpdateDeleteContainerMetaData(req.query.name,null,function(data) {
+            cdnAPI.setUpdateDeleteContainerMetaData(req.query.containerName,null,function(data) {
                 outputDataJSON(data,res);
             });
         }
         else if (req.query.mode == 'getContainerObjects') {
 
-            cdnAPI.getContainerObjects(req.query.name, function(data) {
+            cdnAPI.getContainerObjects(req.query.containerName, function(data) {
                 outputDataJSON(data,res);
             });
         }
@@ -132,6 +132,13 @@ app.get('/api', function(req, res) {
                outputDataJSON(data,res);
             });
         }
+        else if (req.query.mode == 'deleteSingleObject') {
+
+            cdnAPI.deleteSingleObject(req.query.containerName, req.query.objectName, function (data) {
+               outputDataJSON(data,res);
+            });
+        }
+        else res.end();
     }
     else res.end();
 });
@@ -144,5 +151,6 @@ function outputDataJSON (data,res) {
     res.end();
 }
 
+//------------------------------------------------------
 
 app.listen(80);

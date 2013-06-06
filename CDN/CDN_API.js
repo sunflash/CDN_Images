@@ -101,6 +101,16 @@ exports.deleteSingleObject = function deleteSingleObject (containerName, objectN
 
         if(containerName.length > 0 && objectName.length > 0) {
 
+            encodeContainerName(containerName, function (encodedContainerName) {
+
+                encodeObjectName(objectName,function (encodedObjectName) {
+
+                    deleteSingleObjectInCloudFileContainer(encodedContainerName, encodedObjectName, function (statusCode) {
+
+                        callback(statusCode);
+                    })
+                });
+            });
         }
         else callback(null);
     }
@@ -109,7 +119,7 @@ exports.deleteSingleObject = function deleteSingleObject (containerName, objectN
 
 //--------------------------------------------------------------------------------
 
-// URL encode container and objects name, cut to under 256 byte string and replace '/' with '_'
+// URL encode container name, cut to under 256 byte string and replace '/' with '_'
 
 function encodeContainerName (containerName, callback) {
 
@@ -127,6 +137,28 @@ function encodeContainerName (containerName, callback) {
             callback(containerName);
         }
         else callback(null);
+    }
+    else callback(null);
+}
+
+// URL encode object name, cut to under 1024 byte string
+
+function encodeObjectName (objectName, callback) {
+
+    if (objectName) {
+
+        if (objectName.length > 0) {
+
+            objectName = objectName.replace(/\//g,'_');
+            objectName = encodeURIComponent(objectName);
+
+            if (objectName.length > 1000) {
+                objectName = objectName.substr(0,1000);
+            }
+
+            callback(objectName);
+        }
+        else callback (null);
     }
     else callback(null);
 }
@@ -808,3 +840,10 @@ function getCloudFileContainerObjectsInChunk (containerName,maxObjectsFetchLimit
 //--------------------------------------------------------------------------------
 
 // Delete single object, one at a time
+
+function deleteSingleObjectInCloudFileContainer (containerName, objectName, callback) {
+
+    var objectPath = '/'+containerName+'/'+objectName;
+
+    callback(objectPath);
+}
