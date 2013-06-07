@@ -167,6 +167,12 @@ app.get('/api', function(req, res) {
                outputDataJSON(data,res);
             });
         }
+        else if (req.query.mode == 'deleteMultipleObjects') {
+
+            cdnAPI.deleteMultipleObjects(req.query.containerName, req.query.objectNames.split(',') , function (data) {
+               outputDataJSON(data,res);
+            });
+        }
         else res.end();
     }
     else res.end();

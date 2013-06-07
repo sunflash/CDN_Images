@@ -117,6 +117,28 @@ exports.deleteSingleObject = function deleteSingleObject (containerName, objectN
     else callback(null);
 }
 
+exports.deleteMultipleObjects = function deleteMultipleObjects (containerName, objectNames, callback) {
+
+    if (containerName && objectNames) {
+
+        if(containerName.length > 0 && objectNames.length > 0) {
+
+            encodeContainerName(containerName, function (encodedContainerName) {
+
+                encodeObjectNames(objectNames,function (encodedObjectNames) {
+
+                    deleteMultipleObjectInCloudFileContainer(encodedContainerName, encodedObjectNames, null,function (statusCode) {
+
+                        callback(statusCode);
+                    })
+                });
+            });
+        }
+        else callback(null);
+    }
+    else callback(null);
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -162,6 +184,35 @@ function encodeObjectName (objectName, callback) {
     }
     else callback(null);
 }
+
+function encodeObjectNames (objectNames, callback) {
+
+    var encodedObjectNames = [];
+
+    for (var i = 0; i < objectNames.length; i++) {
+
+        var objectName = objectNames[i];
+
+        if (objectName) {
+
+            if (objectName.length > 0) {
+
+                objectName = objectName.replace(/\//g,'_');
+                objectName = encodeURIComponent(objectName);
+
+                if (objectName.length > 1000) {
+                    objectName = objectName.substr(0,1000);
+                }
+
+                encodedObjectNames.push(objectName);
+            }
+        }
+    }
+
+    if (encodedObjectNames.length > 0) callback(encodedObjectNames);
+    else                               callback(null);
+}
+
 
 //--------------------------------------------------------------------------------
 
@@ -898,4 +949,122 @@ function deleteSingleObjectInCloudFileContainer (containerName, objectName, call
             }
         );
     });
+}
+
+//--------------------------------------------------------------------------------
+
+// Delete multiple objects, max 10000 objects for each delete operation
+
+function deleteMultipleObjectInCloudFileContainer (containerName, objectsNames, maxObjectsDeleteLimit, callback) {
+
+    if (!maxObjectsDeleteLimit || maxObjectsDeleteLimit > 10000) maxObjectsDeleteLimit = 10000;
+
+    if (containerName && objectsNames && objectsNames.length > 0) {
+
+        var maxRound = Math.ceil(objectsNames.length/maxObjectsDeleteLimit);
+
+        deleteCloudFileContainerObjectsInChunk(containerName,objectsNames,maxObjectsDeleteLimit,maxRound,null,function(statusCode) {
+
+            callback(statusCode);
+
+            maxRound = null;
+            containerName = null;
+            objectsNames = null;
+            maxObjectsDeleteLimit = null;
+        });
+    }
+    else callback(null);
+}
+
+function deleteCloudFileContainerObjectsInChunk (containerName,objectsNames,maxObjectsDeleteLimit,maxRound,round,callback) {
+
+    if (!maxObjectsDeleteLimit || maxObjectsDeleteLimit > 10000) maxObjectsDeleteLimit = 10000;
+    if (objectsNames.length < maxObjectsDeleteLimit) maxObjectsDeleteLimit = objectsNames.length;
+    if (!round) round  = 0;
+
+    var deleteObjectList = '';
+
+    for (var i = 0; i < maxObjectsDeleteLimit; i++) {
+
+        if (i < (maxObjectsDeleteLimit-1)) {
+
+            deleteObjectList += '/' + containerName + '/' + objectsNames.pop() + '\n';
+        }
+        else deleteObjectList += '/' + containerName + '/' + objectsNames.pop();
+    }
+
+    if (round < maxRound) {
+
+        getAuthInfo(function (api) {
+
+            request(
+                {
+                    method:'DELETE',
+                    uri: api.storageURL+'?bulk-delete',
+                    headers:{
+                        'Content-type': 'text/plain',
+                        'Accept': 'application/json',
+                        'X-Auth-Token': api.authToken
+                    },
+                    body:deleteObjectList
+                }
+                , function (error, response, body) {
+
+                    if (response.statusCode == 200) {
+
+                        round++;
+
+                        if (JSON.parse(body).Errors[0] && JSON.parse(body).Errors[0][1] == 401) {
+
+                            authenticate(function(authInfoFresh) {
+
+                                request(
+                                    {
+                                        method:'DELETE',
+                                        uri: api.storageURL+'?bulk-delete',
+                                        headers:{
+                                            'Content-type': 'text/plain',
+                                            'Accept': 'application/json',
+                                            'X-Auth-Token': authInfoFresh.authToken
+                                        },
+                                        body:deleteObjectList
+                                    }
+                                    , function (error, response, body) {
+
+                                        if (response.statusCode == 200) {
+                                            //console.log(JSON.parse(body));
+                                            if (round < maxRound) {
+                                                deleteCloudFileContainerObjectsInChunk(containerName,objectsNames,maxObjectsDeleteLimit,maxRound,round,callback);
+                                            }
+                                            else if (round == maxRound) callback(2);
+                                            else                        callback(null);
+                                        }
+                                        else if (response.statusCode == 400  || response.statusCode == 502) {
+
+                                            //console.log('Server Error');
+                                            callback(null);
+                                        }
+                                        else callback(null);
+                                    }
+                                );
+                            });
+                        }
+                        else if (round < maxRound) {
+                            //console.log(JSON.parse(body));
+                            deleteCloudFileContainerObjectsInChunk(containerName,objectsNames,maxObjectsDeleteLimit,maxRound,round,callback);
+                        }
+                        else if (round == maxRound) callback(1);
+                        else                        callback(null);
+                    }
+                    else if (response.statusCode == 400  || response.statusCode == 502) {
+
+                        //console.log('Server Error');
+                        callback(null);
+                    }
+                    else callback(null);
+                }
+            );
+        });
+    }
+    else callback(null);
 }
