@@ -173,6 +173,12 @@ app.get('/api', function(req, res) {
                outputDataJSON(data,res);
             });
         }
+        else if (req.query.mode == 'deleteAllObjectsInContainer') {
+
+            cdnAPI.deleteAllObjectsInContainer(req.query.containerName, function (data) {
+                outputDataJSON(data,res);
+            });
+        }
         else res.end();
     }
     else res.end();

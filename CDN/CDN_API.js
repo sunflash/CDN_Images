@@ -139,6 +139,14 @@ exports.deleteMultipleObjects = function deleteMultipleObjects (containerName, o
     else callback(null);
 }
 
+exports.deleteAllObjectsInContainer = function deleteAllObjectsInContainer (containerName,callback) {
+
+    deleteAllObjectsInCloudFileContainer(containerName, function (statusCode) {
+
+        callback(statusCode);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -1064,6 +1072,50 @@ function deleteCloudFileContainerObjectsInChunk (containerName,objectsNames,maxO
                     else callback(null);
                 }
             );
+        });
+    }
+    else callback(null);
+}
+
+function deleteAllObjectsInCloudFileContainer (containerName, callback) {
+
+    if (containerName && containerName.length > 0) {
+
+        encodeContainerName(containerName, function (encodedContainerName) {
+
+            getCloudFileContainerObjects(encodedContainerName, null, function (objects) {
+
+                if (objects && objects.length > 0) {
+
+                    var objectsCount = parseInt(objects.length);
+                    var maxObjectsDeleteLimit = 10000;
+                    var maxRound     = Math.ceil(objectsCount/maxObjectsDeleteLimit);
+
+                    var objectsNames = [];
+
+                    for (var i = 0; i < objects.length; i++) {
+
+                        objectsNames.push(objects[i].name);
+                    }
+
+                    encodeObjectNames(objectsNames, function (encodedObjectNames) {
+
+                        deleteCloudFileContainerObjectsInChunk(encodedContainerName,encodedObjectNames,maxObjectsDeleteLimit,maxRound,null, function (statusCode) {
+
+                            callback(statusCode);
+
+                            objectsCount = null;
+                            maxObjectsDeleteLimit = null;
+                            maxRound = null;
+                            objectsNames = null;
+                            encodedContainerName = null;
+                            encodedObjectNames  = null;
+                        });
+
+                    });
+                }
+                else callback(null);
+            });
         });
     }
     else callback(null);
