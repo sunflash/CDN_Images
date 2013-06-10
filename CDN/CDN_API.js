@@ -9,6 +9,7 @@
 var request = require('request');
 var redis = require("redis"),
     client = redis.createClient();
+var async = require('async');
 
 var user = 'minreklame';
 var id = '634ffdbbc9aff9c74a4c66818616384f';
@@ -147,6 +148,14 @@ exports.deleteAllObjectsInContainer = function deleteAllObjectsInContainer (cont
     });
 }
 
+exports.deleteContainers = function deleteContainers (containerNames, callback) {
+
+    deleteCloudFileContainers(containerNames, function(statusCode) {
+
+        callback(statusCode);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -169,6 +178,34 @@ function encodeContainerName (containerName, callback) {
         else callback(null);
     }
     else callback(null);
+}
+
+function encodeContainerNames (containerNames, callback) {
+
+    var encodedContainerNames = [];
+
+    for (var i = 0; i < containerNames.length; i++) {
+
+        var containerName = containerNames[i];
+
+        if (containerName) {
+
+            if (containerName.length > 0) {
+
+                containerName = containerName.replace(/\//g,'_');
+                containerName = encodeURIComponent(containerName);
+
+                if (containerName.length > 250) {
+                    containerName = containerName.substr(0,1000);
+                }
+
+                encodedContainerNames.push(containerName);
+            }
+        }
+    }
+
+    if (encodedContainerNames.length > 0)   callback(encodedContainerNames);
+    else                                    callback(null);
 }
 
 // URL encode object name, cut to under 1024 byte string
@@ -1119,4 +1156,112 @@ function deleteAllObjectsInCloudFileContainer (containerName, callback) {
         });
     }
     else callback(null);
+}
+
+//--------------------------------------------------------------------------------
+
+// Delete containers
+
+function deleteCloudFileContainers (containerNames, callback) {
+
+    if (typeof containerNames == 'string' || containerNames instanceof String) {containerNames = [containerNames];}
+
+    if (containerNames && containerNames.length > 0) {
+
+        async.waterfall([
+            function(callback){
+
+                async.map(containerNames, function(containerName, callback) {
+
+                    deleteAllObjectsInCloudFileContainer(containerName, function (){
+                        callback(null,containerName);
+                    });
+                }, function(err, results) {
+                    callback(null, results);
+                });
+            },
+            function(emptyContainerNames,callback){
+
+                encodeContainerNames(emptyContainerNames, function(encodedContainerNames) {
+                    callback(null,encodedContainerNames);
+                });
+            },
+            function(encodedContainerNames, callback){
+
+                async.map(encodedContainerNames, function(containerName, callback) {
+
+                    getAuthInfo(function (api) {
+
+                        request(
+                            {
+                                method:'DELETE',
+                                uri:api.storageURL+'/'+containerName,
+                                headers:{
+                                    'X-Auth-Token': api.authToken
+                                }
+                            }
+                            , function (error, response, body) {
+
+                                if (response.statusCode == 204) {
+
+                                    callback(null,1);
+                                }
+                                else if (response.statusCode == 404) {
+
+                                    //console.log('Container '+containerName+' not exist A');
+                                    callback(null,null);
+                                }
+                                else if (response.statusCode ==  409) {
+
+                                    //console.log('Container '+containerName+' not empty A');
+                                    callback(null,0);
+                                }
+                                else if (response.statusCode == 401) {
+
+                                    authenticate(function(authInfoFresh) {
+
+                                        request(
+                                            {
+                                                method:'DELETE',
+                                                uri:api.storageURL+'/'+containerName,
+                                                headers:{
+                                                    'X-Auth-Token': authInfoFresh.authToken
+                                                }
+                                            }
+                                            , function (error, response, body) {
+
+                                                if (response.statusCode == 204) {
+
+                                                    callback(null,1);
+                                                }
+                                                else if (response.statusCode == 404) {
+
+                                                    //console.log('Container '+containerName+' not exist B');
+                                                    callback(null, null);
+                                                }
+                                                else if (response.statusCode ==  409) {
+
+                                                    //console.log('Container '+containerName+' not empty B');
+                                                    callback(null,0);
+                                                }
+                                                else callback(null,null);
+                                            }
+                                        );
+                                    });
+                                }
+                                else callback(null,null);
+                            }
+                        );
+                    });
+
+                }, function(err, results) {
+
+                    callback(null, results);
+                });
+            }
+        ], function (err, result) {
+
+            callback(result);
+        });
+    }
 }

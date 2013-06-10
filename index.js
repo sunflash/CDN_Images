@@ -179,6 +179,16 @@ app.get('/api', function(req, res) {
                 outputDataJSON(data,res);
             });
         }
+        else if (req.query.mode == 'deleteContainers') {
+
+            var containerNames = req.query.containerNames;
+            if (containerNames.indexOf(',') != -1) {containerNames = containerNames.split(',');}
+
+            cdnAPI.deleteContainers(containerNames, function (data) {
+                outputDataJSON(data,res);
+                containerNames = null;
+            });
+        }
         else res.end();
     }
     else res.end();
