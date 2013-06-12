@@ -167,6 +167,13 @@ exports.createUpdateObject = function createUpdateObject (filePath, containerNam
     });
 }
 
+exports.objectDetails = function objectDetails (containerName, objectName, callback) {
+
+    getObjectDetails(containerName, objectName, function (metaData) {
+        callback(metaData);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -1353,7 +1360,7 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
 
                                     callback(null,401,hash,encodedContainerName);
                                 }
-                                else callback(0);
+                                else callback(response.statusCode);
 
                                 headerValues = null;
                             })
@@ -1392,7 +1399,7 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
 
                                         callback(null,1);
                                     }
-                                    else callback(0);
+                                    else callback(response.statusCode);
 
                                     headerValues = null;
                                 })
@@ -1400,13 +1407,144 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
                     });
                 }
                 else  if (statusCode == 201)    callback(null,1);
-                else                            callback(0);
+                else                            callback(null);
             }
         ], function (err, statusCode) {
 
-            if (err)                console.log(err);
+            if (err) {
+
+                console.log(err);
+                callback(null);
+            }
             else if (statusCode)    callback(statusCode);
             else                    callback(null);
+        });
+    }
+    else callback(null);
+}
+
+//--------------------------------------------------------------------------------
+
+// Get object meta data
+
+function getObjectDetails (containerName, objectName, callback) {
+
+    if (containerName && objectName && containerName.length > 0 && objectName.length > 0) {
+
+        encodeContainerName(containerName, function(encodedContainerName) {
+
+            encodeObjectName(objectName, function(encodedObjectName) {
+
+                getAuthInfo(function (api) {
+
+                    request(
+                        {
+                            method:'HEAD',
+                            uri:api.storageURL+'/'+encodedContainerName+'/'+encodedObjectName,
+                            headers:{
+                                'X-Auth-Token':api.authToken
+                            }
+                        }
+                        , function (error, response, body) {
+
+                            //console.log('A '+response.statusCode);
+
+                            if (response.statusCode == 200) {
+
+                                var objectDetails = {};
+
+                                objectDetails.contentSize = response.headers['content-length'];
+                                objectDetails.contentType = response.headers['content-type'];
+                                objectDetails.etag        = response.headers['etag'];
+                                objectDetails.timeStamp   = new Date(parseInt(response.headers['x-timestamp'])*1000);
+                                objectDetails.lastModified= new Date(response.headers['last-modified']);
+
+                                if (response.headers['x-delete-at']) {
+
+                                    objectDetails.expiredDate = new Date(parseInt(response.headers['x-delete-at'])*1000);
+                                }
+
+                                var metaTag;
+                                var metaHeaderPrefix = 'x-object-meta-';
+
+                                for (x in response.headers) {
+
+                                    if (x.indexOf(metaHeaderPrefix) != -1) {
+
+                                        if (!metaTag) metaTag = {};
+                                        metaTag[x.substr(x.indexOf(metaHeaderPrefix)+metaHeaderPrefix.length, x.length-metaHeaderPrefix.length)] = response.headers[x];
+                                    }
+                                }
+
+                                if (metaTag) objectDetails.metaTag = metaTag;
+
+                                callback(objectDetails);
+                                objectDetails = null;
+                                metaTag = null;
+                                metaHeaderPrefix = null;
+                            }
+                            else if (response.statusCode == 401) {
+
+                                authenticate(function(authInfoFresh) {
+
+                                    request(
+                                        {
+                                            method:'HEAD',
+                                            uri:api.storageURL+'/'+encodedContainerName+'/'+encodedObjectName,
+                                            headers:{
+                                                'X-Auth-Token':authInfoFresh.authToken
+                                            }
+                                        }
+                                        , function (error, response, body) {
+
+                                            //console.log('B '+response.statusCode);
+
+                                            if (response.statusCode == 200) {
+
+                                                var objectDetails = {};
+
+                                                objectDetails.contentSize = response.headers['content-length'];
+                                                objectDetails.contentType = response.headers['content-type'];
+                                                objectDetails.etag        = response.headers['etag'];
+                                                objectDetails.timeStamp   = new Date(parseInt(response.headers['x-timestamp'])*1000);
+                                                objectDetails.lastModified= new Date(response.headers['last-modified']);
+
+                                                if (response.headers['x-delete-at']) {
+
+                                                    objectDetails.expiredDate = new Date(parseInt(response.headers['x-delete-at'])*1000);
+                                                }
+
+                                                var metaTag;
+                                                var metaHeaderPrefix = 'x-object-meta-';
+
+                                                for (x in response.headers) {
+
+                                                    if (x.indexOf(metaHeaderPrefix) != -1) {
+
+                                                        if (!metaTag) metaTag = {};
+                                                        metaTag[x.substr(x.indexOf(metaHeaderPrefix)+metaHeaderPrefix.length, x.length-metaHeaderPrefix.length)] = response.headers[x];
+                                                    }
+                                                }
+
+                                                if (metaTag) objectDetails.metaTag = metaTag;
+
+                                                callback(objectDetails);
+                                                objectDetails = null;
+                                                metaTag = null;
+                                                metaHeaderPrefix = null;
+                                            }
+                                            else callback(null);
+                                        }
+                                    );
+                                });
+                            }
+                            else callback(null);
+                        }
+                    );
+
+                });
+
+            });
         });
     }
     else callback(null);

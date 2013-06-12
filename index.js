@@ -195,7 +195,7 @@ app.get('/api', function(req, res) {
 
             var containerName   = 'Test';
 
-            var date        = new Date("June 12, 2013 13:30:00"); // Your timezone!
+            var date        = new Date("June 12, 2013 16:30:00"); // Your timezone!
 
             var filePath        = '../images/22959/1.jpg';
             var contentType     = 'image/jpeg';
@@ -208,6 +208,12 @@ app.get('/api', function(req, res) {
             */
 
             cdnAPI.createUpdateObject(filePath, containerName, contentType, metaData, date, function (data) {
+                outputDataJSON(data,res);
+            });
+        }
+        else if (req.query.mode == 'getObjectMetaData') {
+
+            cdnAPI.objectDetails(req.query.containerName, req.query.objectName, function(data) {
                 outputDataJSON(data,res);
             });
         }
