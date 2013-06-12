@@ -10,6 +10,9 @@ var request = require('request');
 var redis = require("redis"),
     client = redis.createClient();
 var async = require('async');
+var crypto = require('crypto');
+var path = require('path');
+var fs = require('fs');
 
 var user = 'minreklame';
 var id = '634ffdbbc9aff9c74a4c66818616384f';
@@ -151,6 +154,14 @@ exports.deleteAllObjectsInContainer = function deleteAllObjectsInContainer (cont
 exports.deleteContainers = function deleteContainers (containerNames, callback) {
 
     deleteCloudFileContainers(containerNames, function(statusCode) {
+
+        callback(statusCode);
+    });
+}
+
+exports.createUpdateObject = function createUpdateObject (filePath, containerName, contentType, metaData, expiredDate, callback) {
+
+    createUpdateCloudFileObjects(filePath, containerName, contentType, metaData, expiredDate, function (statusCode) {
 
         callback(statusCode);
     });
@@ -1264,4 +1275,139 @@ function deleteCloudFileContainers (containerNames, callback) {
             callback(result);
         });
     }
+}
+
+//--------------------------------------------------------------------------------
+
+// Create update object
+
+function getHash (algorithmName, filePath, callback) {
+
+    var sum = crypto.createHash(algorithmName);
+
+    var readStream = fs.ReadStream(filePath);
+    readStream.on('data', function(d) { sum.update(d); });
+    readStream.on('end', function() {
+        callback(sum.digest('hex'));
+    });
+}
+
+function createUpdateCloudFileObjects (filePath, containerName, contentType, metaData, expiredDate, callback) {
+
+    if (filePath && containerName && filePath.length > 0 && containerName.length > 0) {
+
+        async.waterfall([
+
+            function (callback) {
+                fs.exists(filePath, function(exists) {
+
+                    if (exists) callback(null);
+                    else        callback(filePath+' does not exist');
+                });
+            },
+            function (callback) {
+
+                getHash('md5',filePath, function (hash) {
+
+                    callback(null,hash);
+                });
+            },
+            function (hash, callback) {
+
+                encodeContainerName(containerName, function(encodedContainerName) {
+
+                    callback(null, hash, encodedContainerName);
+                });
+            },
+            function (hash, encodedContainerName,callback) {
+
+                getAuthInfo(function (api) {
+
+                    var headerValues = {};
+                    if (metaData) headerValues = metaData;
+                    headerValues['X-Auth-Token'] = api.authToken;
+                    headerValues['Content-type'] = contentType;
+                    headerValues['ETag']         = hash;
+                    headerValues['Transfer-Encoding'] = 'chunked';
+
+                    if (expiredDate) headerValues['X-Delete-At'] = (expiredDate.getTime()/1000.0).toString();
+
+                    fs.createReadStream(filePath).pipe(
+
+                        request(
+                            {
+                                method:'PUT',
+                                uri:api.storageURL+'/'+encodedContainerName+'/'+path.basename(filePath),
+                                headers:headerValues
+                            }
+                            , function (error, response, body) {
+
+                                //console.log('A '+response.statusCode);
+                                //console.log(body);
+
+                                if (response.statusCode == 201) {
+
+                                    callback(null,201,hash, encodedContainerName);
+                                }
+                                else if (response.statusCode == 401) {
+
+                                    callback(null,401,hash,encodedContainerName);
+                                }
+                                else callback(0);
+
+                                headerValues = null;
+                            })
+                    );
+                });
+            },
+            function (statusCode, hash, encodedContainerName, callback) {
+
+                if (statusCode == 401) {
+
+                    authenticate(function (authInfoFresh) {
+
+                        var headerValues = {};
+                        if (metaData) headerValues = metaData;
+                        headerValues['X-Auth-Token'] = authInfoFresh.authToken;
+                        headerValues['Content-type'] = contentType;
+                        headerValues['ETag']         = hash;
+                        headerValues['Transfer-Encoding'] = 'chunked';
+
+                        if (expiredDate) headerValues['X-Delete-At'] = (expiredDate.getTime()/1000.0).toString();
+
+                        fs.createReadStream(filePath).pipe(
+
+                            request(
+                                {
+                                    method:'PUT',
+                                    uri:authInfoFresh.storageURL+'/'+encodedContainerName+'/'+path.basename(filePath),
+                                    headers:headerValues
+                                }
+                                , function (error, response, body) {
+
+                                    //console.log('B '+response.statusCode);
+                                    //console.log(body);
+
+                                    if (response.statusCode == 201) {
+
+                                        callback(null,1);
+                                    }
+                                    else callback(0);
+
+                                    headerValues = null;
+                                })
+                        );
+                    });
+                }
+                else  if (statusCode == 201)    callback(null,1);
+                else                            callback(0);
+            }
+        ], function (err, statusCode) {
+
+            if (err)                console.log(err);
+            else if (statusCode)    callback(statusCode);
+            else                    callback(null);
+        });
+    }
+    else callback(null);
 }

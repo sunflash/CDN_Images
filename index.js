@@ -189,6 +189,28 @@ app.get('/api', function(req, res) {
                 containerNames = null;
             });
         }
+        else if (req.query.mode == 'createUpdateObject') {
+
+            // X-Object-Meta-PIN: 1234
+
+            var containerName   = 'Test';
+
+            var date        = new Date("June 12, 2013 13:30:00"); // Your timezone!
+
+            var filePath        = '../images/22959/1.jpg';
+            var contentType     = 'image/jpeg';
+            var metaData        =  {'X-Object-Meta-Ikea': 'kitchen catalog'};
+
+            /*
+            var filePath        = '../publication.json';
+            var contentType     = 'application/json';
+            var metaData        =  {'X-Object-Meta-Feed': 'publication'};
+            */
+
+            cdnAPI.createUpdateObject(filePath, containerName, contentType, metaData, date, function (data) {
+                outputDataJSON(data,res);
+            });
+        }
         else res.end();
     }
     else res.end();
