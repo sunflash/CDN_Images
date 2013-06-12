@@ -174,6 +174,13 @@ exports.objectDetails = function objectDetails (containerName, objectName, callb
     });
 }
 
+exports.updateObjectMetaData = function updateObjectMetaData (containerName, objectName, metaData, expiredDate, callback) {
+
+    updateCloudFileObjectMetaData(containerName, objectName, metaData, expiredDate, function(statusCode) {
+        callback(statusCode);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -736,8 +743,6 @@ function createCloudFileContainer (containerName, metaData, callback) {
                     });
                 }
                 else callback(null);
-
-                headerValues = null;
             }
         );
     });
@@ -797,8 +802,6 @@ function setUpdateDeleteCloudFileContainerMetaData (containerName, metaData, cal
                     });
                 }
                 else callback(null);
-
-                headerValues = null;
             }
         );
     });
@@ -1544,6 +1547,86 @@ function getObjectDetails (containerName, objectName, callback) {
 
                 });
 
+            });
+        });
+    }
+    else callback(null);
+}
+
+//--------------------------------------------------------------------------------
+
+// Get object meta data
+
+// Set, update : X-Object-Meta-Book: 'Hello world'
+// Delete      : X-Remove-Object-Meta-Name: foo
+
+function updateCloudFileObjectMetaData (containerName, objectName, metaData, expiredDate, callback) {
+
+    if (containerName && objectName && containerName.length > 0 && objectName.length > 0) {
+
+        encodeContainerName(containerName, function(encodedContainerName) {
+
+            encodeObjectName(objectName, function(encodedObjectName) {
+
+                if (metaData || expiredDate) {
+
+                    getAuthInfo(function (api) {
+
+                        var headerValues = {};
+                        if (metaData) headerValues = metaData;
+                        headerValues['X-Auth-Token'] = api.authToken;
+
+                        if (expiredDate) headerValues['X-Delete-At'] = (expiredDate.getTime()/1000.0).toString();
+
+                        request(
+                            {
+                                method:'POST',
+                                uri:api.storageURL+'/'+encodedContainerName+'/'+encodedObjectName,
+                                headers:headerValues
+                            }
+                            , function (error, response, body) {
+
+                                //console.log('A '+response.statusCode);
+
+                                if (response.statusCode == 202) {
+                                    callback(1);
+                                }
+                                else if (response.statusCode == 404) {
+                                    callback(null);
+                                }
+                                else if (response.statusCode == 401) {
+
+                                    authenticate(function(authInfoFresh) {
+
+                                        headerValues['X-Auth-Token'] = authInfoFresh.authToken;
+
+                                        request(
+                                            {
+                                                method:'POST',
+                                                uri:api.storageURL+'/'+encodedContainerName+'/'+encodedObjectName,
+                                                headers:headerValues
+                                            }
+                                            , function (error, response, body) {
+
+                                                if (response.statusCode == 202) {
+
+                                                    //console.log('B '+response.statusCode);
+
+                                                    callback(1);
+                                                }
+                                                else if (response.statusCode == 404) {
+                                                    callback(null);
+                                                }
+                                                else callback(null);
+                                            }
+                                        );
+                                    });
+                                }
+                                else callback(null);
+                            }
+                        );
+                    });
+                }
             });
         });
     }

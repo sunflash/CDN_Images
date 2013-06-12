@@ -209,12 +209,35 @@ app.get('/api', function(req, res) {
 
             cdnAPI.createUpdateObject(filePath, containerName, contentType, metaData, date, function (data) {
                 outputDataJSON(data,res);
+
+                containerName = null;
+                date = null;
+                filePath = null;
+                contentType = null;
+                metaData = null;
             });
         }
         else if (req.query.mode == 'getObjectMetaData') {
 
             cdnAPI.objectDetails(req.query.containerName, req.query.objectName, function(data) {
                 outputDataJSON(data,res);
+            });
+        }
+        else if (req.query.mode == 'updateObjectMetaData') {
+
+            // Set, update : X-Object-Meta-Book: 'Hello world'
+            // Delete      : X-Remove-Object-Meta-Name: foo
+
+            var metaData;
+            metaData = {'X-Remove-Object-Meta-Ikea': 'kitchen catalog', 'X-Object-Meta-catalog': 'ikea'};
+
+            var date = new Date("June 12, 2013 16:1:00"); // Your timezone!
+
+            cdnAPI.updateObjectMetaData(req.query.containerName, req.query.objectName, metaData, date, function (statusCode) {
+                outputDataJSON(statusCode,res);
+
+                metaData = null;
+                date = null;
             });
         }
         else res.end();
