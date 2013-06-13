@@ -305,6 +305,13 @@ app.get('/api', function(req, res) {
             }
             else outputDataJSON(null, res);
         }
+        else if (req.query.mode == 'cdnEnabledContainerList') {
+
+            cdnAPI.cdnEnabledContainerList(function(cdnEnalbedContainerList){
+
+                outputDataJSON(cdnEnalbedContainerList,res);
+            });
+        }
         else res.end();
     }
     else res.end();

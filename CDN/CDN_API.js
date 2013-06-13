@@ -213,6 +213,13 @@ exports.downloadObject  = function downloadObject (containerName, objectName, sa
     });
 }
 
+exports.cdnEnabledContainerList = function cdnEnabledContainerList (callback) {
+
+    getCDNEnabledContainerList(null, function(cdnEnabledContainerList) {
+        callback(cdnEnabledContainerList);
+    })
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -315,6 +322,25 @@ function encodeObjectNames (objectNames, callback) {
     else                               callback(null);
 }
 
+function encodeMarkerName (markerName) {
+
+    if (markerName) {
+
+        if (markerName.length > 0) {
+
+            markerName = markerName.replace(/\//g,'_');
+            markerName = encodeURIComponent(markerName);
+
+            if (markerName.length > 250) {
+                markerName = markerName.substr(0,250);
+            }
+
+            return markerName;
+        }
+        else return null;
+    }
+    else return null;
+}
 
 //--------------------------------------------------------------------------------
 
@@ -520,7 +546,7 @@ function getContainerListInChunk (maxContainersFetchLimit,maxRound,round,marker,
         getAuthInfo(function (api) {
 
             var url = api.storageURL+'?format=json'+'&limit='+maxContainersFetchLimit;
-            if (marker) url = url + '&marker=' + marker;
+            if (marker) url = url + '&marker=' + encodeMarkerName(marker);
 
             request(
                 {
@@ -877,7 +903,7 @@ function getCloudFileContainerObjectsInChunk (containerName,maxObjectsFetchLimit
         getAuthInfo(function (api) {
 
             var url = api.storageURL+'/'+containerName+'?format=json'+'&limit='+maxObjectsFetchLimit;
-            if (marker) url = url + '&marker=' + marker;
+            if (marker) url = url + '&marker=' + encodeMarkerName(marker);
 
             request(
                 {
@@ -1799,7 +1825,7 @@ function moveCloudFileObject(fromContainerName, fromObjectName, toContainerName,
     });
 }
 
-// rename object
+// Rename object
 
 function renameUpdateCloudFileObject(containerName, fromObjectName, toObjectName, metaData, callback) {
 
@@ -1824,7 +1850,7 @@ function renameUpdateCloudFileObject(containerName, fromObjectName, toObjectName
 
 //--------------------------------------------------------------------------------
 
-// download object
+// Download object
 
 function downloadCloudFileObject(containerName, objectName, savePath, callback) {
 
@@ -1957,4 +1983,139 @@ function downloadCloudFileObject(containerName, objectName, savePath, callback) 
     }
     else callback(null);
 
+}
+
+//--------------------------------------------------------------------------------
+
+// List CDN-Enabled Container
+
+//--------------------------------------------------------------------------------
+
+// Get list of CDN-Enabled container in json, max 10000 containers for each fetch
+
+function getCDNEnabledContainerList (maxContainersFetchLimit, callback) {
+
+    if (!maxContainersFetchLimit || maxContainersFetchLimit > 10000) maxContainersFetchLimit = 10000;
+
+    getAccountDetails(function (accountDetails) {
+
+        if (accountDetails) {
+
+            var containersCount = parseInt(accountDetails.containerCount);
+            var maxRound     = Math.ceil(containersCount/maxContainersFetchLimit);
+
+            getCDNEnabledContainerListInChunk(maxContainersFetchLimit,maxRound,null,null,null,function(containerObjects) {
+
+                callback(containerObjects);
+
+                containersCount = null;
+                maxRound        = null;
+            });
+        }
+        else callback(null);
+    });
+}
+
+function getCDNEnabledContainerListInChunk (maxContainersFetchLimit,maxRound,round,marker,containers,callback) {
+
+    if (!maxContainersFetchLimit || maxContainersFetchLimit > 10000) maxContainersFetchLimit = 10000;
+    if (!containers) containers = [];
+    if (!round)      round  = 0;
+
+    if (round < maxRound) {
+
+        getAuthInfo(function (api) {
+
+            var url = api.cdnURL+'?format=json'+'&limit='+maxContainersFetchLimit + '&enabled_only=true';
+            if (marker) url = url + '&marker=' + encodeMarkerName(marker);
+
+            request(
+                {
+                    method:'GET',
+                    uri:url,
+                    headers:{
+                        'X-Auth-Token':api.authToken
+                    }
+                }
+                , function (error, response, body) {
+
+                    if (response.statusCode == 200) {
+
+                        var containerArray = JSON.parse(body);
+
+                        if (containerArray.length > 0) {
+
+                            containers = containers.concat(containerArray);
+
+                            round++;
+                            if (round < maxRound) {
+                                marker = null;
+                                var lastContainerName = containerArray[containerArray.length-1].name;
+                                getContainerListInChunk (maxContainersFetchLimit,maxRound,round,lastContainerName,containers,callback);
+                            }
+                            else if (round == maxRound) {
+                                callback(containers);
+                                marker = null;
+                            }
+                        }
+                        else callback(null);
+
+                        containerArray  = null;
+                        url = null;
+                    }
+                    else if (response.statusCode == 204) {
+
+                        callback(null);
+                        url = null;
+                    }
+                    else if (response.statusCode == 401) {
+
+                        authenticate(function(authInfoFresh) {
+
+                            request(
+                                {
+                                    method:'GET',
+                                    uri:url,
+                                    headers:{
+                                        'X-Auth-Token':authInfoFresh.authToken
+                                    }
+                                }
+                                , function (error, response, body) {
+
+                                    if (response.statusCode == 200) {
+
+                                        var containerArray = JSON.parse(body);
+
+                                        if (containerArray.length > 0) {
+
+                                            containers = containers.concat(containerArray);
+
+                                            round++;
+                                            if (round < maxRound) {
+                                                marker = null;
+                                                var lastContainerName = containerArray[containerArray.length-1].name;
+                                                getContainerListInChunk (maxContainersFetchLimit,maxRound,round,lastContainerName,containers,callback);
+                                            }
+                                            else if (round == maxRound) {
+                                                callback(containers);
+                                                marker = null;
+                                            }
+                                        }
+                                        else callback(null);
+
+                                        containerArray  = null;
+                                        url = null;
+                                    }
+                                    else callback(null);
+                                }
+                            );
+                        });
+                    }
+                    else callback(null);
+                }
+            );
+
+        });
+    }
+    else callback(null);
 }
