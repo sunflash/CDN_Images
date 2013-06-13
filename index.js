@@ -195,7 +195,8 @@ app.get('/api', function(req, res) {
 
             var containerName   = 'Test';
 
-            var date        = new Date("June 12, 2013 16:30:00"); // Your timezone!
+            //var date        = new Date("June 12, 2013 16:30:00"); // Your timezone!
+            var date          = new Date().addHours(8);
 
             var filePath        = '../images/22959/1.jpg';
             var contentType     = 'image/jpeg';
@@ -231,7 +232,8 @@ app.get('/api', function(req, res) {
             var metaData;
             metaData = {'X-Remove-Object-Meta-Ikea': 'kitchen catalog', 'X-Object-Meta-catalog': 'ikea'};
 
-            var date = new Date("June 12, 2013 16:1:00"); // Your timezone!
+            //var date = new Date("June 12, 2013 16:1:00"); // Your timezone!
+            var date = new Date().addHours(5);
 
             cdnAPI.updateObjectMetaData(req.query.containerName, req.query.objectName, metaData, date, function (statusCode) {
                 outputDataJSON(statusCode,res);
@@ -244,6 +246,11 @@ app.get('/api', function(req, res) {
     }
     else res.end();
 });
+
+Date.prototype.addHours= function(h){
+    this.setHours(this.getHours()+h);
+    return this;
+}
 
 function outputDataJSON (data,res) {
 

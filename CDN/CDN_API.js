@@ -1340,7 +1340,7 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
                     headerValues['ETag']         = hash;
                     headerValues['Transfer-Encoding'] = 'chunked';
 
-                    if (expiredDate) headerValues['X-Delete-At'] = (expiredDate.getTime()/1000.0).toString();
+                    if (expiredDate) headerValues['X-Delete-At'] = Math.floor(expiredDate.getTime()/1000.0).toString();
 
                     fs.createReadStream(filePath).pipe(
 
@@ -1383,7 +1383,7 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
                         headerValues['ETag']         = hash;
                         headerValues['Transfer-Encoding'] = 'chunked';
 
-                        if (expiredDate) headerValues['X-Delete-At'] = (expiredDate.getTime()/1000.0).toString();
+                        if (expiredDate) headerValues['X-Delete-At'] = Math.floor(expiredDate.getTime()/1000.0).toString();
 
                         fs.createReadStream(filePath).pipe(
 
@@ -1576,7 +1576,7 @@ function updateCloudFileObjectMetaData (containerName, objectName, metaData, exp
                         if (metaData) headerValues = metaData;
                         headerValues['X-Auth-Token'] = api.authToken;
 
-                        if (expiredDate) headerValues['X-Delete-At'] = (expiredDate.getTime()/1000.0).toString();
+                        if (expiredDate) headerValues['X-Delete-At'] = Math.floor(expiredDate.getTime()/1000.0).toString();
 
                         request(
                             {
