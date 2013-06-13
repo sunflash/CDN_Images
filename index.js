@@ -243,6 +243,22 @@ app.get('/api', function(req, res) {
                 date = null;
             });
         }
+        else if (req.query.mode == 'copyObject') {
+
+            if (req.query.parameters.indexOf(',') != -1) {
+
+                var p = req.query.parameters.split(',');
+                var metaData = {'X-Object-Meta-copy': 'object'};
+
+                cdnAPI.copyObject(p[0],p[1],p[2],p[3],metaData, function(statusCode) {
+                    outputDataJSON(statusCode,res);
+
+                    p = null;
+                    metaData = null;
+                })
+            }
+            else outputDataJSON(null, res);
+        }
         else res.end();
     }
     else res.end();

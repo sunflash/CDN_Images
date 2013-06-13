@@ -181,6 +181,14 @@ exports.updateObjectMetaData = function updateObjectMetaData (containerName, obj
     });
 }
 
+exports.copyObject = function copyObject (fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, callback) {
+
+    copyCloudFileObject(fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, function(statusCode) {
+
+        callback(statusCode);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -1632,3 +1640,115 @@ function updateCloudFileObjectMetaData (containerName, objectName, metaData, exp
     }
     else callback(null);
 }
+
+//--------------------------------------------------------------------------------
+
+// Copy object
+
+function copyCloudFileObject (fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, callback) {
+
+    if (fromContainerName && fromObjectName && toContainerName && toObjectName) {
+
+        if (fromContainerName.length > 0 && fromObjectName.length > 0 && toContainerName.length > 0 && toObjectName.length > 0) {
+
+            async.waterfall([
+
+                function (callback) {
+
+                    encodeContainerName(fromContainerName, function (encodedFromContainerName) {
+
+                        callback(null, encodedFromContainerName);
+                    });
+                },
+                function (encodedFromContainerName, callback) {
+
+                    encodeObjectName(fromObjectName, function (encodedFromObjectName) {
+
+                        callback(null, encodedFromContainerName, encodedFromObjectName);
+                    });
+                },
+                function (encodedFromContainerName, encodedFromObjectName, callback) {
+
+                    encodeContainerName(toContainerName, function(encodedToContainerName) {
+
+                        callback(null, encodedFromContainerName, encodedFromObjectName, encodedToContainerName);
+                    });
+                },
+                function (encodedFromContainerName, encodedFromObjectName, encodedToContainerName, callback) {
+
+                    encodeObjectName(toObjectName, function(encodedToObjectName) {
+
+                        callback(null, encodedFromContainerName, encodedFromObjectName, encodedToContainerName, encodedToObjectName);
+                    });
+                },
+                function (encodedFromContainerName, encodedFromObjectName, encodedToContainerName, encodedToObjectName, callback) {
+
+                    getAuthInfo(function (api) {
+
+                        var headerValues = {};
+                        if (metaData) headerValues = metaData;
+                        headerValues['X-Auth-Token'] = api.authToken;
+                        headerValues['Destination'] = '/'+encodedToContainerName+'/'+encodedToObjectName;
+
+                        request(
+                            {
+                                method:'COPY',
+                                uri:api.storageURL+'/'+encodedFromContainerName+'/'+encodedFromObjectName,
+                                headers:headerValues
+                            }
+                            , function (error, response, body) {
+
+                                //console.log('A '+response.statusCode);
+
+                                if (response.statusCode == 201) {
+                                    callback(null,1);
+                                }
+                                else if (response.statusCode == 404) {
+                                    callback(body);
+                                }
+                                else if (response.statusCode == 401) {
+
+                                    authenticate(function(authInfoFresh){
+
+                                        headerValues['X-Auth-Token'] = authInfoFresh.authToken;
+
+                                        request(
+                                            {
+                                                method:'COPY',
+                                                uri:api.storageURL+'/'+encodedFromContainerName+'/'+encodedFromObjectName,
+                                                headers:headerValues
+                                            }
+                                            , function (error, response, body) {
+
+                                                //console.log('B '+response.statusCode);
+
+                                                if (response.statusCode == 201) {
+                                                    callback(null,1);
+                                                }
+                                                else if (response.statusCode == 404) {
+                                                    callback(body);
+                                                }
+                                                else callback(null);
+                                            }
+                                        );
+                                    });
+                                }
+                                else callback(null);
+                            });
+                    });
+                }
+            ], function (err, result) {
+
+                if (err) {
+                    console.log(err);
+                    callback(null);
+                }
+                else if (result) callback(result);
+                else             callback(null);
+            });
+        }
+        else callback(null);
+    }
+    else callback(null);
+}
+
