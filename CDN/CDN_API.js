@@ -1768,6 +1768,8 @@ function copyCloudFileObject (fromContainerName, fromObjectName, toContainerName
     else callback(null);
 }
 
+// Move object
+
 function moveCloudFileObject(fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, callback) {
 
     copyCloudFileObject(fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, function(statusCode) {
@@ -1788,6 +1790,8 @@ function moveCloudFileObject(fromContainerName, fromObjectName, toContainerName,
         else callback(statusCode);
     });
 }
+
+// rename object
 
 function renameUpdateCloudFileObject(containerName, fromObjectName, toObjectName, metaData, callback) {
 
