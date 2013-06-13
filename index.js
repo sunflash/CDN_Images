@@ -264,9 +264,25 @@ app.get('/api', function(req, res) {
             if (req.query.parameters.indexOf(',') != -1) {
 
                 var p = req.query.parameters.split(',');
-                var metaData = {'X-Object-Meta-copy': 'object'};
+                var metaData = {'X-Object-Meta-move': 'object'};
 
                 cdnAPI.moveObject(p[0],p[1],p[2],p[3],metaData, function(statusCode) {
+                    outputDataJSON(statusCode,res);
+
+                    p = null;
+                    metaData = null;
+                })
+            }
+            else outputDataJSON(null, res);
+        }
+        else if (req.query.mode == 'renameObject') {
+
+            if (req.query.parameters.indexOf(',') != -1) {
+
+                var p = req.query.parameters.split(',');
+                var metaData = {'X-Object-Meta-rename': 'object'};
+
+                cdnAPI.renameUpdateObject(p[0],p[1],p[2],metaData, function(statusCode) {
                     outputDataJSON(statusCode,res);
 
                     p = null;

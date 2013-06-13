@@ -197,6 +197,14 @@ exports.moveObject = function moveObject (fromContainerName, fromObjectName, toC
     });
 }
 
+exports.renameUpdateObject = function renameUpdateObject (containerName, fromObjectName, toObjectName, metaData, callback) {
+
+    renameUpdateCloudFileObject(containerName, fromObjectName, toObjectName, metaData, function(statusCode) {
+
+        callback(statusCode);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -1767,6 +1775,27 @@ function moveCloudFileObject(fromContainerName, fromObjectName, toContainerName,
         if (statusCode == 1) {
 
             encodeContainerName(fromContainerName, function (encodedContainerName) {
+
+                encodeObjectName(fromObjectName,function (encodedObjectName) {
+
+                    deleteSingleObjectInCloudFileContainer(encodedContainerName, encodedObjectName, function (statusCode) {
+
+                        callback(statusCode);
+                    })
+                });
+            });
+        }
+        else callback(statusCode);
+    });
+}
+
+function renameUpdateCloudFileObject(containerName, fromObjectName, toObjectName, metaData, callback) {
+
+    copyCloudFileObject(containerName, fromObjectName, containerName, toObjectName, metaData, function(statusCode) {
+
+        if (statusCode == 1) {
+
+            encodeContainerName(containerName, function (encodedContainerName) {
 
                 encodeObjectName(fromObjectName,function (encodedObjectName) {
 
