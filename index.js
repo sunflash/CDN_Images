@@ -22,6 +22,7 @@ var express = require('express');
 var app = express ();
 app.use(express.compress());
 app.disable('x-powered-by');
+app.listen(80);
 
 //------------------------------------------------- '/' '/mr'
 
@@ -261,5 +262,3 @@ function outputDataJSON (data,res) {
 }
 
 //------------------------------------------------------
-
-app.listen(80);
