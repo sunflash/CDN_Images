@@ -189,6 +189,14 @@ exports.copyObject = function copyObject (fromContainerName, fromObjectName, toC
     });
 }
 
+exports.moveObject = function moveObject (fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, callback) {
+
+    moveCloudFileObject(fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, function(statusCode) {
+
+        callback(statusCode);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -1752,3 +1760,23 @@ function copyCloudFileObject (fromContainerName, fromObjectName, toContainerName
     else callback(null);
 }
 
+function moveCloudFileObject(fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, callback) {
+
+    copyCloudFileObject(fromContainerName, fromObjectName, toContainerName, toObjectName, metaData, function(statusCode) {
+
+        if (statusCode == 1) {
+
+            encodeContainerName(fromContainerName, function (encodedContainerName) {
+
+                encodeObjectName(fromObjectName,function (encodedObjectName) {
+
+                    deleteSingleObjectInCloudFileContainer(encodedContainerName, encodedObjectName, function (statusCode) {
+
+                        callback(statusCode);
+                    })
+                });
+            });
+        }
+        else callback(statusCode);
+    });
+}
