@@ -205,6 +205,14 @@ exports.renameUpdateObject = function renameUpdateObject (containerName, fromObj
     });
 }
 
+exports.downloadObject  = function downloadObject (containerName, objectName, savePath, callback) {
+
+    downloadCloudFileObject(containerName, objectName, savePath, function(statusCode) {
+
+        callback(statusCode);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -1812,4 +1820,141 @@ function renameUpdateCloudFileObject(containerName, fromObjectName, toObjectName
         }
         else callback(statusCode);
     });
+}
+
+//--------------------------------------------------------------------------------
+
+// download object
+
+function downloadCloudFileObject(containerName, objectName, savePath, callback) {
+
+    if (containerName && objectName && containerName.length > 0 && objectName.length > 0) {
+
+        encodeContainerName(containerName, function(encodedContainerName) {
+
+            encodeObjectName(objectName, function(encodedObjectName) {
+
+                getAuthInfo(function (api) {
+
+                    savePath = path.join(savePath,objectName);
+
+                    var localStream = fs.createWriteStream(savePath);
+
+                    var out = request(
+                        {
+                            method:'GET',
+                            uri:api.storageURL+'/'+encodedContainerName+'/'+encodedObjectName,
+                            headers:{
+                                'X-Auth-Token':api.authToken
+                            }
+                        });
+
+                    out.setMaxListeners(0);
+
+                    //************************************
+
+                    out.on('response', function (resp) {
+
+                        if (resp.statusCode === 200 || resp.statusCode == 304){
+
+                            out.pipe(localStream);
+
+                            localStream.on('close', function () {
+                                callback(1);
+                                localStream = null;
+                                out = null;
+                            });
+
+                            localStream.on('error', function (){
+
+                                fs.unlink(savePath, function (err) {
+                                    if (err) callback(err);
+                                    else {
+                                        console.log('A successfully deleted '+savePath);
+                                        callback(null);
+                                    }
+                                    localStream = null;
+                                    out = null;
+                                });
+                            });
+                        }//************************************
+                        else if (resp.statusCode == 401) {
+
+                            //console.log('Authentication error');
+
+                            out = null;
+
+                            authenticate(function(authInfoFresh) {
+
+                                var outB = request(
+                                    {
+                                        method:'GET',
+                                        uri:api.storageURL+'/'+encodedContainerName+'/'+encodedObjectName,
+                                        headers:{
+                                            'X-Auth-Token':authInfoFresh.authToken
+                                        }
+                                    });
+
+                                outB.setMaxListeners(0);
+
+                                outB.on('response', function (resp) {
+
+                                    if (resp.statusCode === 200 || resp.statusCode == 304){
+
+                                        outB.pipe(localStream);
+
+                                        localStream.on('close', function () {
+                                            callback(1);
+                                            localStream = null;
+                                            outB = null;
+                                        });
+
+                                        localStream.on('error', function (){
+
+                                            fs.unlink(savePath, function (err) {
+                                                if (err) callback(err);
+                                                else {
+                                                    console.log('B successfully deleted '+savePath);
+                                                    callback(null);
+                                                }
+                                                localStream = null;
+                                                outB = null;
+                                            });
+                                        });
+                                    }
+                                    else {
+
+                                        fs.unlink(savePath, function (err) {
+                                            if (err) callback(err);
+                                            else {
+                                                console.log("B No file found at url");
+                                                callback(null);
+                                            }
+                                            localStream = null;
+                                            outB = null;
+                                        });
+                                    }
+                                });
+                            });
+                        }//************************************
+                        else {
+
+                            fs.unlink(savePath, function (err) {
+                                if (err) callback(err);
+                                else {
+                                    console.log("A No file found at url");
+                                    callback(null);
+                                }
+                                localStream = null;
+                                out = null;
+                            });
+                        }
+                    });
+                });
+
+            });
+        });
+    }
+    else callback(null);
+
 }

@@ -291,6 +291,20 @@ app.get('/api', function(req, res) {
             }
             else outputDataJSON(null, res);
         }
+        else if (req.query.mode == 'downloadObject') {
+
+            if (req.query.parameters.indexOf(',') != -1) {
+
+                var p = req.query.parameters.split(',');
+
+                cdnAPI.downloadObject(p[0],p[1],p[2], function(statusCode) {
+                    outputDataJSON(statusCode,res);
+
+                    p = null;
+                })
+            }
+            else outputDataJSON(null, res);
+        }
         else res.end();
     }
     else res.end();
