@@ -307,9 +307,16 @@ app.get('/api', function(req, res) {
         }
         else if (req.query.mode == 'cdnEnabledContainerList') {
 
-            cdnAPI.cdnEnabledContainerList(function(cdnEnalbedContainerList){
+            cdnAPI.cdnEnabledContainerList(function(cdnEnabledContainerList){
 
-                outputDataJSON(cdnEnalbedContainerList,res);
+                outputDataJSON(cdnEnabledContainerList,res);
+            });
+        }
+        else if (req.query.mode == 'cdnEnabledContainerDetails') {
+
+            cdnAPI.cdnEnabledContainerDetails(req.query.containerName,function(cdnEnabledContainerDetails) {
+
+                outputDataJSON(cdnEnabledContainerDetails,res);
             });
         }
         else res.end();

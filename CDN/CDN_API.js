@@ -220,6 +220,13 @@ exports.cdnEnabledContainerList = function cdnEnabledContainerList (callback) {
     })
 }
 
+exports.cdnEnabledContainerDetails = function cdnEnabledContainerDetails (containerName, callback) {
+
+    getCDNEnabledContainerDetails(containerName, function(containerDetails) {
+        callback(containerDetails);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -2118,4 +2125,81 @@ function getCDNEnabledContainerListInChunk (maxContainersFetchLimit,maxRound,rou
         });
     }
     else callback(null);
+}
+
+//--------------------------------------------------------------------------------
+
+// Get CDN-Enabled container details
+
+function getCDNEnabledContainerDetails(containerName, callback) {
+
+    encodeContainerName(containerName, function(encodedContainerName) {
+
+        getAuthInfo(function (api) {
+
+            request(
+                {
+                    method:'HEAD',
+                    uri:api.cdnURL+'/'+encodedContainerName+'?format=json',
+                    headers:{
+                        'X-Auth-Token':api.authToken
+                    }
+                }
+                , function (error, response, body) {
+
+                    console.log('A '+response.statusCode);
+
+                    if (response.statusCode == 204) {
+
+                        var containerDetails = response.headers;
+
+                        delete containerDetails['date'];
+                        delete containerDetails['x-trans-id'];
+                        delete containerDetails['content-type'];
+                        delete containerDetails['content-length'];
+                        delete containerDetails['connection'];
+
+                        callback(containerDetails);
+                        containerDetails = null;
+                    }
+                    else if (response.statusCode == 401) {
+
+                        authenticate(function(authInfoFresh) {
+
+                            request(
+                                {
+                                    method:'HEAD',
+                                    uri:api.cdnURL+'/'+encodedContainerName+'?format=json',
+                                    headers:{
+                                        'X-Auth-Token':authInfoFresh.authToken
+                                    }
+                                }
+                                , function (error, response, body) {
+
+                                    console.log('B '+response.statusCode);
+
+                                    if (response.statusCode == 204) {
+
+                                        var containerDetails = response.headers;
+
+                                        delete containerDetails['date'];
+                                        delete containerDetails['x-trans-id'];
+                                        delete containerDetails['content-type'];
+                                        delete containerDetails['content-length'];
+                                        delete containerDetails['connection'];
+
+                                        callback(containerDetails);
+                                        containerDetails = null;
+                                    }
+                                    else callback(null);
+                                }
+                            );
+                        });
+                    }
+                    else callback(null);
+                }
+            );
+
+        });
+    });
 }
