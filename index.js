@@ -319,6 +319,13 @@ app.get('/api', function(req, res) {
                 outputDataJSON(cdnEnabledContainerDetails,res);
             });
         }
+        else if (req.query.mode == 'cdnEnableContainer') {
+
+            cdnAPI.cdnEnableContainer(req.query.containerName, req.query.ttl, function (cdnEnabledContainerDetails) {
+
+                outputDataJSON(cdnEnabledContainerDetails, res);
+            });
+        }
         else res.end();
     }
     else res.end();

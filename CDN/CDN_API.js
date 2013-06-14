@@ -227,6 +227,13 @@ exports.cdnEnabledContainerDetails = function cdnEnabledContainerDetails (contai
     });
 }
 
+exports.cdnEnableContainer = function cdnEnableContainer (containerName, TTL, callback) {
+
+    executeCDNEnableContainer (containerName, TTL, function(containerDetails) {
+        callback(containerDetails);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -2147,7 +2154,7 @@ function getCDNEnabledContainerDetails(containerName, callback) {
                 }
                 , function (error, response, body) {
 
-                    console.log('A '+response.statusCode);
+                    //console.log('A '+response.statusCode);
 
                     if (response.statusCode == 204) {
 
@@ -2176,9 +2183,92 @@ function getCDNEnabledContainerDetails(containerName, callback) {
                                 }
                                 , function (error, response, body) {
 
-                                    console.log('B '+response.statusCode);
+                                    //console.log('B '+response.statusCode);
 
                                     if (response.statusCode == 204) {
+
+                                        var containerDetails = response.headers;
+
+                                        delete containerDetails['date'];
+                                        delete containerDetails['x-trans-id'];
+                                        delete containerDetails['content-type'];
+                                        delete containerDetails['content-length'];
+                                        delete containerDetails['connection'];
+
+                                        callback(containerDetails);
+                                        containerDetails = null;
+                                    }
+                                    else callback(null);
+                                }
+                            );
+                        });
+                    }
+                    else callback(null);
+                }
+            );
+
+        });
+    });
+}
+
+//--------------------------------------------------------------------------------
+
+// CDN-Enable a container
+
+function executeCDNEnableContainer (containerName, TTL, callback) {
+
+    encodeContainerName(containerName,function(encodedContainerName) {
+
+        if (!TTL) TTL = 3600;
+
+        getAuthInfo(function (api) {
+
+            request(
+                {
+                    method:'PUT',
+                    uri:api.cdnURL+'/'+encodedContainerName,
+                    headers:{
+                        'X-Auth-Token': api.authToken,
+                        'X-CDN-Enabled': 'TRUE',
+                        'X-TTL': TTL.toString()
+                    }
+                }
+                , function (error, response, body) {
+
+                    //console.log('A '+response.statusCode);
+
+                    if (response.statusCode == 201 || response.statusCode == 202) {
+
+                        var containerDetails = response.headers;
+
+                        delete containerDetails['date'];
+                        delete containerDetails['x-trans-id'];
+                        delete containerDetails['content-type'];
+                        delete containerDetails['content-length'];
+                        delete containerDetails['connection'];
+
+                        callback(containerDetails);
+                        containerDetails = null;
+                    }
+                    else if (response.statusCode == 401) {
+
+                        authenticate(function(authInfoFresh) {
+
+                            request(
+                                {
+                                    method:'PUT',
+                                    uri:api.cdnURL+'/'+encodedContainerName,
+                                    headers:{
+                                        'X-Auth-Token': authInfoFresh.authToken,
+                                        'X-CDN-Enabled': 'TRUE',
+                                        'X-TTL': TTL.toString()
+                                    }
+                                }
+                                , function (error, response, body) {
+
+                                    //console.log('B '+response.statusCode);
+
+                                    if (response.statusCode == 201 || response.statusCode == 202) {
 
                                         var containerDetails = response.headers;
 
