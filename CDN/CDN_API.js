@@ -234,6 +234,19 @@ exports.cdnEnableContainer = function cdnEnableContainer (containerName, TTL, ca
     });
 }
 
+exports.changeCDNEnabledContainerTTL = function changeCDNEnabledContainerTTL (containerName, TTL, callback) {
+
+    if (containerName && TTL) {
+
+        executeCDNEnableContainer (containerName, TTL, function(containerDetails) {
+
+            if (containerDetails) callback(1);
+            else                  callback(0);
+        });
+    }
+    else callback(null);
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
