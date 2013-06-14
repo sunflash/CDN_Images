@@ -332,6 +332,23 @@ app.get('/api', function(req, res) {
                 outputDataJSON(statusCode, res);
             })
         }
+        else if (req.query.mode == 'changeCDNContainerAttributes') {
+
+            var containerName   = null;
+            var TTL             = null;
+            var cdnEnable       = null;
+            var logRetention    = null;
+
+            if (req.query.containerName) containerName  = req.query.containerName;
+            if (req.query.TTL)           TTL            = req.query.TTL;
+            if (req.query.cdnEnable)     cdnEnable      = req.query.cdnEnable;
+            if (req.query.logRetention)  logRetention   = req.query.logRetention;
+
+            cdnAPI.changeCDNContainerAttributes(containerName, TTL, cdnEnable, logRetention , function (containerDetails) {
+
+                outputDataJSON(containerDetails, res);
+            });
+        }
         else res.end();
     }
     else res.end();
