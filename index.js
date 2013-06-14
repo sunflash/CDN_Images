@@ -326,6 +326,12 @@ app.get('/api', function(req, res) {
                 outputDataJSON(cdnEnabledContainerDetails, res);
             });
         }
+        else if (req.query.mode == 'cdnDisableContainer') {
+
+            cdnAPI.cdnDisableContainer(req.query.containerName, function(statusCode) {
+                outputDataJSON(statusCode, res);
+            })
+        }
         else res.end();
     }
     else res.end();

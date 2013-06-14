@@ -247,6 +247,13 @@ exports.changeCDNEnabledContainerTTL = function changeCDNEnabledContainerTTL (co
     else callback(null);
 }
 
+exports.cdnDisableContainer = function cdnDisableContainer (containerName, callback) {
+
+    executeCDNDisableContainer (containerName, function(containerDetails) {
+        callback(containerDetails);
+    });
+}
+
 //--------------------------------------------------------------------------------
 
 // URL encode container name, cut to under 256 byte string and replace '/' with '_'
@@ -2275,6 +2282,87 @@ function executeCDNEnableContainer (containerName, TTL, callback) {
                                         'X-Auth-Token': authInfoFresh.authToken,
                                         'X-CDN-Enabled': 'TRUE',
                                         'X-TTL': TTL.toString()
+                                    }
+                                }
+                                , function (error, response, body) {
+
+                                    //console.log('B '+response.statusCode);
+
+                                    if (response.statusCode == 201 || response.statusCode == 202) {
+
+                                        var containerDetails = response.headers;
+
+                                        delete containerDetails['date'];
+                                        delete containerDetails['x-trans-id'];
+                                        delete containerDetails['content-type'];
+                                        delete containerDetails['content-length'];
+                                        delete containerDetails['connection'];
+
+                                        callback(containerDetails);
+                                        containerDetails = null;
+                                    }
+                                    else callback(null);
+                                }
+                            );
+                        });
+                    }
+                    else callback(null);
+                }
+            );
+
+        });
+    });
+}
+
+//--------------------------------------------------------------------------------
+
+// CDN-Disable a container
+
+function executeCDNDisableContainer (containerName, callback) {
+
+    encodeContainerName(containerName,function(encodedContainerName) {
+
+        getAuthInfo(function (api) {
+
+            request(
+                {
+                    method:'PUT',
+                    uri:api.cdnURL+'/'+encodedContainerName,
+                    headers:{
+                        'X-Auth-Token': api.authToken,
+                        'X-CDN-Enabled': 'FALSE',
+                        'X-TTL': '900'
+                    }
+                }
+                , function (error, response, body) {
+
+                    //console.log('A '+response.statusCode);
+
+                    if (response.statusCode == 201 || response.statusCode == 202) {
+
+                        var containerDetails = response.headers;
+
+                        delete containerDetails['date'];
+                        delete containerDetails['x-trans-id'];
+                        delete containerDetails['content-type'];
+                        delete containerDetails['content-length'];
+                        delete containerDetails['connection'];
+
+                        callback(containerDetails);
+                        containerDetails = null;
+                    }
+                    else if (response.statusCode == 401) {
+
+                        authenticate(function(authInfoFresh) {
+
+                            request(
+                                {
+                                    method:'PUT',
+                                    uri:api.cdnURL+'/'+encodedContainerName,
+                                    headers:{
+                                        'X-Auth-Token': authInfoFresh.authToken,
+                                        'X-CDN-Enabled': 'FALSE',
+                                        'X-TTL': '900'
                                     }
                                 }
                                 , function (error, response, body) {
