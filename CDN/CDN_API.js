@@ -2167,7 +2167,7 @@ function getCDNEnabledContainerDetails(containerName, callback) {
             request(
                 {
                     method:'HEAD',
-                    uri:api.cdnURL+'/'+encodedContainerName+'?format=json',
+                    uri:api.cdnURL+'/'+encodedContainerName,
                     headers:{
                         'X-Auth-Token':api.authToken
                     }
@@ -2196,7 +2196,7 @@ function getCDNEnabledContainerDetails(containerName, callback) {
                             request(
                                 {
                                     method:'HEAD',
-                                    uri:api.cdnURL+'/'+encodedContainerName+'?format=json',
+                                    uri:api.cdnURL+'/'+encodedContainerName,
                                     headers:{
                                         'X-Auth-Token':authInfoFresh.authToken
                                     }
