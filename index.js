@@ -22,7 +22,32 @@ var express = require('express');
 var app = express ();
 app.use(express.compress());
 app.disable('x-powered-by');
-app.listen(80);
+
+var cluster = require('cluster');
+var numCPUs = require('os').cpus().length;
+
+if (cluster.isMaster) {
+    // Fork workers. One per CPU for maximum effectiveness
+    for (var i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+
+    cluster.on('exit', function(deadWorker, code, signal) {
+        // Restart the worker
+        var worker = cluster.fork();
+
+        // Note the process IDs
+        var newPID = worker.process.pid;
+        var oldPID = deadWorker.process.pid;
+
+        // Log the event
+        console.log('worker '+oldPID+' died.');
+        console.log('worker '+newPID+' born.');
+    });
+} else {
+
+    app.listen(80);
+}
 
 //------------------------------------------------- '/' '/mr'
 
