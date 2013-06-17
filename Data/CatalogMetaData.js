@@ -126,7 +126,7 @@ exports.getCatalogData = function getCatalogData (callBack) {
                     }
                     else if ( (pageCount%2) == 1) {
 
-                        //console.log("!!! catalog "+pubID+ " have odd pages "+pageCount);
+                        console.log("!!! catalog "+pubID+ " have odd pages "+pageCount);
                     }
                     //else {console.log("Catalog "+pubID+" have "+pageCount+" pages.");}
 
@@ -145,6 +145,8 @@ exports.getCatalogData = function getCatalogData (callBack) {
         activeCatalogArray = null;
     });
 
+
+    console.log('------------------------------------------------------------------');
     console.log('***** CatalogMetaData *****');
 }
 

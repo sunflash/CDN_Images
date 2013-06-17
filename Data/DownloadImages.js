@@ -171,7 +171,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
 
                             if (err) {console.log(err);}
                             //console.log(imageInfo.filePath+'  '+imageInfo.imageLink);
-                            console.log(imageInfo.filePath);
+                            //console.log(imageInfo.filePath);
 
                             if (success) next(null,imageInfo);
                             else         next(null);
