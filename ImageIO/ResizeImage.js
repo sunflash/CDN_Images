@@ -11,8 +11,6 @@ var async   = require('async');
 var gm      = require('gm');
 var path    = require('path');
 
-var uploadToCDN = require('../CDN/UploadToCDN');
-
 var saveFilePathPrefix  = '../images';
 
 var  resizeImageFlow  = async.compose(resizeRequestImage,createResizeImageFolderIfNotExist,checkImageExistLocal);
@@ -38,11 +36,6 @@ exports.resizeImage = function resizeImage (resizeParameters,callback) {
                 else if (result) {
 
                     callback(result);
-
-                    uploadToCDN.uploadImagesToCDN(resizeParameters,result, function (succes) {
-
-                        resizeParameters = null;
-                    });
                 }
                 else callback(null);
             });

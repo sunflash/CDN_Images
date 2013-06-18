@@ -64,8 +64,8 @@ app.get('/mr', function(req, res){
 
 //------------------------------------------------ '/image'
 
-var resizeImage =  require('./ImageIO/ResizeImage');
 var path        =  require('path');
+var cdnImage    =  require('./CDN/CDN_Image');
 
 app.get('/image', function(req, res){
 
@@ -83,15 +83,7 @@ app.get('/image', function(req, res){
             "Height":height
         }
 
-        resizeImage.resizeImage(query, function (data) {
-
-            if (!data) {
-                res.send(404,"Aaaa ooo!");
-                res.end();
-            }
-            else res.sendfile(path.resolve(data));
-
-        });
+        cdnImage.cdnImage(query, res);
 
         publicationID = null;
         page = null;
