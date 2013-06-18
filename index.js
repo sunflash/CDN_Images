@@ -83,7 +83,9 @@ app.get('/image', function(req, res){
             "Height":height
         }
 
-        cdnImage.cdnImage(query, res);
+        cdnImage.cdnImage(query, res, function(result) {
+
+        });
 
         publicationID = null;
         page = null;

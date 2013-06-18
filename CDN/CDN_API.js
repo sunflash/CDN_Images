@@ -1454,6 +1454,10 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
 
                                     callback(null,201,hash, encodedContainerName);
                                 }
+                                else if (response.statusCode == 404) {
+
+                                    callback(null,404,hash,encodedContainerName);
+                                }
                                 else if (response.statusCode == 401) {
 
                                     callback(null,401,hash,encodedContainerName);
@@ -1467,7 +1471,22 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
             },
             function (statusCode, hash, encodedContainerName, callback) {
 
-                if (statusCode == 401) {
+                if (statusCode == 404) {
+
+                    encodeContainerName(containerName, function (encodedContainerName) {
+
+                        createCloudFileContainer(encodedContainerName, metaData, function (succes) {
+
+                            if (succes) callback(null, statusCode, hash, encodedContainerName);
+                            else        callback(404);
+                        });
+                    });
+                }
+                else callback(null, statusCode, hash, encodedContainerName);
+            },
+            function (statusCode, hash, encodedContainerName, callback) {
+
+                if (statusCode == 401 || statusCode == 404) {
 
                     authenticate(function (authInfoFresh) {
 
