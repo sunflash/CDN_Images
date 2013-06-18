@@ -16,7 +16,7 @@ var cdnAPI      = require('./CDN_API');
 var fileSystem  = require('../Data/FileSystem');
 var resizeImage = require('../ImageIO/ResizeImage');
 
-var cdnImageFlow = async.compose(uploadImageToCDN,resizeImageAndServeLocalResizeImage,downloadImages,cdnLinkIfEnable);
+var cdnImageFlow = async.compose(enableContainerForCDN,uploadImageToCloudFile,resizeImageAndServeLocalResizeImage,downloadImages,cdnLinkIfEnable);
 
 exports.cdnImage = function cdnImage (parameters, res, callback) {
 
@@ -98,22 +98,24 @@ function resizeImageAndServeLocalResizeImage (parameters, res, publicationInfo, 
     });
 }
 
-function uploadImageToCDN(parameters, resizeImageFilePath, publicationInfo, callback) {
+function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo, callback) {
 
     // Set, update : X-Object-Meta-Book: 'Hello world'
     // Delete      : X-Remove-Object-Meta-Name: foo
 
     var publicationID = parameters['PublicationID'];
-    if (typeof publicationID == 'number') publicationID = publicationID.toString();
+
+    var containerName = publicationID+'_'+parameters['Width']+'x'+parameters['Height'];
 
     var metaData = {'X-Object-Meta-ID': publicationID.toString()};
     var date     = new Date(publicationInfo['pubStop']);
 
     var contentType     = 'image/jpeg';
 
-    cdnAPI.createUpdateObject(resizeImageFilePath, publicationID, contentType, metaData, date, function (data) {
+    cdnAPI.createUpdateObject(resizeImageFilePath, containerName, contentType, metaData, date, function (data) {
 
-        callback(data);
+        if (data)   callback(null, parameters);
+        else        callback('!! Failed to create /'+publicationID+'/'+path.basename(resizeImageFilePath));
 
         publicationID = null;
         metaData = null;
@@ -125,3 +127,14 @@ function uploadImageToCDN(parameters, resizeImageFilePath, publicationInfo, call
     });
 }
 
+var cdnRedisKeyPrefix = 'CDN.';
+
+function enableContainerForCDN (parameters, callback) {
+
+    var key = cdnRedisKeyPrefix+parameters['PublicationID']+'.'+parameters['Width']+'x'+parameters['Height'];
+
+    console.log(key);
+
+    //client.HGETALL(())
+
+}
