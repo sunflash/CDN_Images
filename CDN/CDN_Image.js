@@ -36,7 +36,7 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
             }
             else if (obj && obj[parameters['PageNumber'].toString()]) {
 
-                console.log('Use CDN image');
+                //console.log('Use CDN image '+parameters['PageNumber']);
 
                 var url = obj['cdnURL'] + '/'+ parameters['PageNumber']+'.'+ obj[parameters['PageNumber'].toString()];
                 res.redirect(url, 307)
@@ -58,7 +58,7 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
                     }
                     else if (result) {
 
-                        console.log(result);
+                        //console.log(result);
                         callback(result);
                     }
                     else callback(null);
@@ -86,9 +86,9 @@ function downloadImages(parameters, res, callback) {
     client.HGETALL((catalogRedisKeyPrefix+parameters.PublicationID), function (err, obj) {
 
         if(err) callback(err);
-        else {
+        else if (obj) {
 
-            if (parseInt(parameters['PageNumber']) <= obj['pageCount']) {
+            if (parseInt(parameters['PageNumber']) <= parseInt(obj['pageCount'])) {
 
                 var savePath = path.join(saveFilePathPrefix,parameters.PublicationID,parameters.PageNumber+'.jpg');
 
@@ -113,8 +113,9 @@ function downloadImages(parameters, res, callback) {
                     }
                 });
             }
-            else callback('Page '+parameters['PageNumber']+' not exist in '+parameters['PublicationID']);
+            else callback('!! Page '+parameters['PageNumber']+' not exist in '+parameters['PublicationID']);
         }
+        else if (!obj) callback('!! Publication '+parameters['PublicationID']+' is not exist');
     });
 }
 
