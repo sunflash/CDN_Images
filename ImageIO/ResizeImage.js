@@ -22,7 +22,7 @@ exports.resizeImage = function resizeImage (resizeParameters,callback) {
     fs.exists(resizeImagePath, function(exists) {
 
         if (exists) {
-            console.log('ResizeImageExist '+resizeImagePath);
+            //console.log('ResizeImageExist '+resizeImagePath);
             callback(resizeImagePath);
         }
         else {
@@ -44,7 +44,7 @@ exports.resizeImage = function resizeImage (resizeParameters,callback) {
         resizeImagePath = null;
     });
 
-    console.log('***** ResizeImage *****');
+    //console.log('***** ResizeImage *****');
 }
 
 function checkImageExistLocal (parameters, callback) {

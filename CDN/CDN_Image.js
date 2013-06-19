@@ -16,28 +16,65 @@ var cdnAPI      = require('./CDN_API');
 var fileSystem  = require('../Data/FileSystem');
 var resizeImage = require('../ImageIO/ResizeImage');
 
-var cdnImageFlow = async.compose(enableContainerForCDN,uploadImageToCloudFile,resizeImageAndServeLocalResizeImage,downloadImages,cdnLinkIfEnable);
+var cdnImageFlow = async.compose(enableContainerForCDN,uploadImageToCloudFile,resizeImageAndServeLocalResizeImage,downloadImages);
+
+var cdnRedisKeyPrefix = 'CDN.';
 
 exports.cdnImage = function cdnImage (parameters, res, callback) {
 
-    cdnImageFlow(parameters,res,function (err, result) {
+    if (parameters['PublicationID'] && parameters['Width'] && parameters['Height'] && parameters['PageNumber']) {
 
-        if (err) {
-            console.log(err);
-            callback (null);
-        }
-        else if (result) {
+        var key = cdnRedisKeyPrefix+parameters['PublicationID']+'.'+parameters['Width']+'x'+parameters['Height'];
 
-            console.log(result);
-            callback(result);
-        }
-        else callback(null);
-    });
-}
+        client.HGETALL(key, function (err, obj) {
 
-function cdnLinkIfEnable (parameters, res, callback) {
+            if (err) {
 
-    callback(null, parameters, res);
+                callback(null);
+                parameters = null;
+                key = null;
+            }
+            else if (obj && obj[parameters['PageNumber'].toString()]) {
+
+                console.log('Use CDN image');
+
+                var url = obj['cdnURL'] + '/'+ parameters['PageNumber']+'.'+ obj[parameters['PageNumber'].toString()];
+                res.redirect(url, 307)
+                callback(url);
+
+                parameters = null;
+                key = null;
+                url = null;
+            }
+            else {
+
+                //console.log('Resize and upload CDN');
+
+                cdnImageFlow(parameters,res,function (err, result) {
+
+                    if (err) {
+                        console.log(err);
+                        callback (null);
+                    }
+                    else if (result) {
+
+                        console.log(result);
+                        callback(result);
+                    }
+                    else callback(null);
+
+                    parameters = null;
+                    key = null;
+                });
+            }
+        });
+    }
+    else {
+
+        callback(null);
+        parameters = null;
+        key = null;
+    }
 }
 
 var catalogRedisKeyPrefix = 'pub.';
@@ -114,7 +151,7 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
 
     cdnAPI.createUpdateObject(resizeImageFilePath, containerName, contentType, metaData, date, function (data) {
 
-        if (data)   callback(null, parameters);
+        if (data)   callback(null, parameters, containerName);
         else        callback('!! Failed to create /'+publicationID+'/'+path.basename(resizeImageFilePath));
 
         publicationID = null;
@@ -127,14 +164,70 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
     });
 }
 
-var cdnRedisKeyPrefix = 'CDN.';
-
-function enableContainerForCDN (parameters, callback) {
+function enableContainerForCDN (parameters, containerName, callback) {
 
     var key = cdnRedisKeyPrefix+parameters['PublicationID']+'.'+parameters['Width']+'x'+parameters['Height'];
 
-    console.log(key);
+    client.HGETALL(key, function (err, obj) {
 
-    //client.HGETALL(())
+        if (err) {
 
+            parameters = null;
+            containerName = null;
+            key = null;
+
+            callback(err);
+        }
+        else if (!obj) {
+
+            //console.log('No key');
+
+            cdnAPI.cdnEnableContainer(containerName, 3600,function(cdnEnabledContainerDetails) {
+
+                if (cdnEnabledContainerDetails) {
+
+                    var cdnURLInfo = {};
+
+                    cdnURLInfo['cdnURL']    = cdnEnabledContainerDetails['x-cdn-uri'];
+                    cdnURLInfo['cdnSSL']    = cdnEnabledContainerDetails['x-cdn-ssl-uri'];
+                    cdnURLInfo['cdniOS']    = cdnEnabledContainerDetails['x-cdn-ios-uri'];
+                    cdnURLInfo['cdnStream'] = cdnEnabledContainerDetails['x-cdn-streaming-uri'];
+
+                    cdnURLInfo[parameters['PageNumber'].toString()] = 'jpg';
+
+                    client.HMSET(key,cdnURLInfo,function (err, result) {
+                        if (err) callback(err);
+                        else     callback(cdnURLInfo['cdnURL']+'/'+parameters['PageNumber']+'.jpg');
+
+                        parameters = null;
+                        containerName = null;
+                        key = null;
+
+                        cdnURLInfo =null;
+                        cdnEnabledContainerDetails = null;
+                        result = null;
+                    });
+                }
+                else callback('Enable container '+containerName+' failed');
+            });
+        }
+        else if (obj) {
+
+            //console.log('Key exist');
+
+            obj[parameters['PageNumber'].toString()] = 'jpg';
+
+            client.HMSET(key,obj,function (err, result) {
+                if (err) callback(err);
+                else     callback(obj['cdnURL']+'/'+parameters['PageNumber']+'.jpg');
+
+                parameters = null;
+                containerName = null;
+                key = null;
+
+                obj = null;
+                result = null;
+            });
+        }
+    });
 }
