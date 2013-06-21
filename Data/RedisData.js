@@ -102,11 +102,6 @@ function cleanUnusedExpiredData(callback) {
                 );
             }
 
-            client.DEL(oldCatalogPubIDKey, function(err, obj) {
-                if(err) callback(err);
-                obj = null;
-            });
-
             client.SADD(cdnCleanKey, unusedExpiredCatalogs, function (err, obj) {
 
                 if(err) callback(err);
@@ -115,6 +110,11 @@ function cleanUnusedExpiredData(callback) {
             });
         }
         else callback(null, null);
+
+        client.DEL(oldCatalogPubIDKey, function(err, obj) {
+            if(err) callback(err);
+            obj = null;
+        });
     });
 }
 
