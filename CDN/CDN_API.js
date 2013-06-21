@@ -436,31 +436,22 @@ function getAuthInfo (callback) {
 
     if (!authInfo.authToken) {
 
-        client.keys(authRedis, function (err, replies) {
+        client.HGETALL(authRedis, function (err, authInfoRedis) {
 
-            if (err) callback(err,null);
-            else
+            if (err) callback(null);
+            else if (authInfoRedis && authInfoRedis['authToken'])
             {
-                if (replies.length == 0) {
+                //console.log('Loading authInfo from local redis db');
+                authInfo = authInfoRedis;
+                callback(authInfoRedis);
+            }
+            else {
 
-                    authenticate(function(authInfoFresh){
+                authenticate(function(authInfoFresh){
 
-                        //console.log('Fresh authInfo from rackspace');
-                        callback(authInfoFresh);
-                    });
-                }
-                else if  (replies.length == 1) {
-
-                    getAuthInfoFromRedis (function (authInfoRedis) {
-
-                        if (authInfoRedis) {
-
-                            //console.log('Loading authInfo from local redis db');
-                            authInfo = authInfoRedis;
-                            callback(authInfoRedis);
-                        }
-                    });
-                }
+                    //console.log('Fresh authInfo from rackspace');
+                    callback(authInfoFresh);
+                });
             }
         });
     }
@@ -469,16 +460,6 @@ function getAuthInfo (callback) {
         //console.log('Reuse authInfo from global variable');
         callback(authInfo);
     }
-}
-
-function getAuthInfoFromRedis(callback) {
-
-    client.hgetall(authRedis, function (err, obj) {
-
-        if (err)        callback(null);
-        else if (obj)   callback(obj);
-        else            callback(null);
-    });
 }
 
 //--------------------------------------------------------------------------------

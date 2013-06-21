@@ -32,13 +32,19 @@ exports.updateRedisData = function updateRedisData (activeCatalogs, activeCatalo
 
 
 var catalogRedisKeyPrefix = 'pub.';
+var activeCatalogPubIDKey = 'activePubID';
+var oldCatalogPubIDKey    = 'oldPubID';
 
 function overWriteWithFreshData (activeCatalogsData, activeCatalogsCount, callback) {
+
+    var activeCatalogPubID = [];
 
     for (var i = 1; i <= activeCatalogsCount; i++) {
 
         var activeCatalogInfo = activeCatalogsData[i];
         var catalogPubID      = catalogRedisKeyPrefix + activeCatalogsData[i].pubID;
+
+        activeCatalogPubID.push(activeCatalogsData[i].pubID);
 
         client.HMSET(catalogPubID,activeCatalogInfo,function (err, obj) {
             if (err) callback(err);
@@ -48,45 +54,67 @@ function overWriteWithFreshData (activeCatalogsData, activeCatalogsCount, callba
         });
     }
 
-    callback(null,activeCatalogsData,activeCatalogsCount);
+    if (activeCatalogPubID.length > 0) {
+
+        client.RENAME(activeCatalogPubIDKey, oldCatalogPubIDKey, function(err, obj) {
+
+            obj = null;
+
+            if (err) callback(err);
+            else {
+
+                client.SADD(activeCatalogPubIDKey, activeCatalogPubID, function (err, obj) {
+
+                    if (err) callback(err);
+                    else {
+                        activeCatalogPubID = null;
+                        obj = null;
+                        callback(null);
+                    }
+                });
+            }
+        });
+    }
+    else {
+
+        activeCatalogPubID = null;
+        callback('!! Empty activeCatalogsData');
+    }
 }
 
+var cdnCleanKey = 'cdn.clean';
 
-var pubKeysFilter = catalogRedisKeyPrefix + '*';
+function cleanUnusedExpiredData(callback) {
 
-Array.prototype.diff = function(a) {
-    return this.filter(function(i) {return !(a.indexOf(i) > -1);});
-};
-
-function cleanUnusedExpiredData(activeCatalogsData, activeCatalogsCount, callback) {
-
-    client.keys(pubKeysFilter, function (err, replies) {
+    client.SDIFF(oldCatalogPubIDKey, activeCatalogPubIDKey, function (err, unusedExpiredCatalogs) {
 
         if(err) callback(err);
-        else
+        else if (unusedExpiredCatalogs.length > 0)
         {
-            var activeCatalogsRedisDataKeys = [];
-            for (var i = 1; i <= activeCatalogsCount; i++ ) {
-                activeCatalogsRedisDataKeys.push(catalogRedisKeyPrefix+activeCatalogsData[i].pubID);
+            for (var i = 0; i < unusedExpiredCatalogs.length; i++) {
+
+                var unusedExpiredCatalogKey = catalogRedisKeyPrefix + unusedExpiredCatalogs[i];
+
+                client.DEL(unusedExpiredCatalogKey, function (err, obj) {
+                        if (err) callback(err);
+                        obj = null;
+                    }
+                );
             }
 
-            var unusedExpiredCatalogs =  replies.diff(activeCatalogsRedisDataKeys);
-            activeCatalogsRedisDataKeys = null;
+            client.DEL(oldCatalogPubIDKey, function(err, obj) {
+                if(err) callback(err);
+                obj = null;
+            });
 
-            if (unusedExpiredCatalogs.length > 0) {
+            client.SADD(cdnCleanKey, unusedExpiredCatalogs, function (err, obj) {
 
-                for (var i = 0; i < unusedExpiredCatalogs.length; i++) {
-
-                    client.hdel(unusedExpiredCatalogs[i],"pubID","pubStart","pubStop","pageCount","iPaperID","iPaperLink",
-                        function (err, obj) {
-                            if (err) callback(err);
-                        });
-                }
-
+                if(err) callback(err);
+                obj = null;
                 callback(null,unusedExpiredCatalogs);
-            }
-            else {callback(null);}
+            });
         }
+        else callback(null, null);
     });
 }
 
