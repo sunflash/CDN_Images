@@ -220,7 +220,7 @@ function enableContainerForCDN (parameters, containerName, callback) {
 
             client.HMSET(key,obj,function (err, result) {
                 if (err) callback(err);
-                else     callback(obj['cdnURL']+'/'+parameters['PageNumber']+'.jpg');
+                else     callback(null,obj['cdnURL']+'/'+parameters['PageNumber']+'.jpg');
 
                 parameters = null;
                 containerName = null;
