@@ -198,7 +198,7 @@ function enableContainerForCDN (parameters, containerName, callback) {
 
                     client.HMSET(key,cdnURLInfo,function (err, result) {
                         if (err) callback(err);
-                        else     callback(cdnURLInfo['cdnURL']+'/'+parameters['PageNumber']+'.jpg');
+                        else     callback(null,cdnURLInfo['cdnURL']+'/'+parameters['PageNumber']+'.jpg');
 
                         parameters = null;
                         containerName = null;
