@@ -119,10 +119,7 @@ function deleteExpiredContainer (cleanPubID,expiredContainerInfo, callback) {
 
                 cdnAPI.deleteContainers(containerName, function(containerDetails) {
 
-                    if (containerDetails == 1) {
-                        next();
-                    }
-                    else next('Delete container '+containerName+' failed');
+                    next();
 
                     info = null;
                     containerName = null;

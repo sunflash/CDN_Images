@@ -8,13 +8,6 @@
 
 //-------------------------------------------------------------------------------
 
-// Start CronJob
-
-var nodeCron = require('./nodeCron');
-nodeCron.cron();
-
-//-------------------------------------------------------------------------------
-
 // Express router
 
 var express = require('express');
@@ -47,6 +40,17 @@ if (cluster.isMaster) {
 } else {
 
     app.listen(80);
+}
+
+//-------------------------------------------------------------------------------
+
+// Start CronJob
+
+var nodeCron = require('./nodeCron');
+
+if (cluster.isMaster) {
+
+    nodeCron.cron();
 }
 
 //------------------------------------------------- '/' '/mr'

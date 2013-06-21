@@ -7,6 +7,7 @@
  */
 
 var catalogMetaData = require('./Data/CatalogMetaData');
+var cdnClean = require('./CDN/CDN_Clean');
 
 var cronJob = require('cron').CronJob;
 
@@ -19,6 +20,17 @@ exports.cron = function cron () {
 
         catalogMetaData.getCatalogData(
             function (data) {
+
+            });
+    },null, true);
+
+    new cronJob('0 30 2,3 * * *', function(){
+
+        var currentTime = new Date();
+        console.log(currentTime);
+
+        cdnClean.cleanExpiredDataInCloudFileAndCDN(
+            function(data) {
 
             });
     },null, true);
