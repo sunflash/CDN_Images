@@ -53,7 +53,7 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
                 cdnImageFlow(parameters,res,function (err, result) {
 
                     if (err) {
-                        console.log(err);
+                        //console.log(err);
                         callback (null);
                     }
                     else if (result) {
