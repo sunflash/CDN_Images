@@ -127,6 +127,7 @@ app.get('/debug', function(req, res){
 //------------------------------------------------------ '/api'
 
 var cdnAPI = require('./CDN/CDN_API');
+var cdnClean = require('./CDN/CDN_Clean');
 
 app.get('/api', function(req, res) {
 
@@ -370,6 +371,12 @@ app.get('/api', function(req, res) {
             cdnAPI.changeCDNContainerAttributes(containerName, TTL, cdnEnable, logRetention , function (containerDetails) {
 
                 outputDataJSON(containerDetails, res);
+            });
+        }
+        else if (req.query.mode == 'cdnClean') {
+
+            cdnClean.cleanExpiredDataInCloudFileAndCDN( function (result) {
+                outputDataJSON(result,res);
             });
         }
         else res.end();
