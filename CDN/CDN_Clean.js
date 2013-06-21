@@ -92,11 +92,13 @@ function disableExpiredContainerInCDN (cleanPubID,expiredContainerInfo, callback
                     next();
                     info = null;
                     containerName = null;
+                    containerDetails = null;
                 });
             }
             ,function(err) {
 
                 callback(null,cleanPubID,expiredContainerInfo);
+                err = null;
             }
         );
     }
