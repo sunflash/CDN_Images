@@ -73,7 +73,6 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
 
         callback(null);
         parameters = null;
-        key = null;
     }
 }
 
@@ -101,14 +100,39 @@ function downloadImages(parameters, res, callback) {
                     }
                     else {
 
+                        var folderPath = path.join(saveFilePathPrefix,parameters.PublicationID);
                         var url = obj['iPaperLink']+imageSuffix+parameters['PageNumber'];
-                        fileSystem.downloadFileFromURL(url, savePath, function (err, success) {
 
-                            if (err)            callback(err);
-                            else if (success)   callback(null, parameters, res, obj);
+                        fs.exists(folderPath, function(exists) {
 
-                            url = null;
-                            savePath = null;
+                            if (exists) {
+
+                                fileSystem.downloadFileFromURL(url, savePath, function (err, success) {
+                                    if (err)            callback(err);
+                                    else if (success)   callback(null, parameters, res, obj);
+
+                                    url = null;
+                                    savePath = null;
+                                    folderPath = null;
+                                });
+                            }
+                            else
+                            {
+                                fs.mkdir(folderPath, function(error) {
+                                    if(error) callback(error);
+                                    else {
+
+                                        fileSystem.downloadFileFromURL(url, savePath, function (err, success) {
+                                            if (err)            callback(err);
+                                            else if (success)   callback(null, parameters, res, obj);
+
+                                            url = null;
+                                            savePath = null;
+                                            folderPath = null;
+                                        });
+                                    }
+                                });
+                            }
                         });
                     }
                 });
