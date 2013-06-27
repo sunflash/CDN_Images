@@ -13,11 +13,12 @@ var request = require('request');
 exports.removeFolderRecursive = function removeFolderRecursive (folderPath){
 
     var deleteFolderCommand = 'rm -rf '+folderPath;
-    exec(deleteFolderCommand,function(err,out) {
-        console.log(out); err && console.log(err);
-        deleteFolderCommand = null;
+    child = exec(deleteFolderCommand,function(err,out) {
+
+        if(err)  {console.log(err);}
+        if (out) {console.log(out);}
     });
-}
+};
 
 exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback) {
 
@@ -28,39 +29,33 @@ exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback)
 
     out.on('response', function (resp) {
 
-        if (resp.statusCode === 200 || resp.statusCode == 304){
+        if (resp.statusCode === 200 || resp.statusCode === 304){
 
             out.pipe(localStream);
 
             localStream.on('close', function () {
                 callback(null, 1);
-                localStream = null;
-                out = null;
             });
 
             localStream.on('error', function (){
 
                 fs.unlink(savePath, function (err) {
-                    if (err) callback(err);
+                    if (err) {callback(err);}
                     else {
                         callback(new Error('successfully deleted '+savePath),null);
                     }
-                    localStream = null;
-                    out = null;
                 });
             });
         }
         else {
 
             fs.unlink(savePath, function (err) {
-                if (err) callback(err);
+                if (err) {callback(err);}
                 else {
                     console.log('successfully deleted '+savePath);
                     callback(new Error("No file found at url : "+url),null);
                 }
-                localStream = null;
-                out = null;
             });
         }
     });
-}
+};
