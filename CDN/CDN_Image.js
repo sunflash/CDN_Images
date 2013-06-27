@@ -16,65 +16,8 @@ var cdnAPI      = require('./CDN_API');
 var fileSystem  = require('../Data/FileSystem');
 var resizeImage = require('../ImageIO/ResizeImage');
 
-var cdnImageFlow = async.compose(enableContainerForCDN,uploadImageToCloudFile,resizeImageAndServeLocalResizeImage,downloadImages);
 
 var cdnRedisKeyPrefix = 'CDN.';
-
-exports.cdnImage = function cdnImage (parameters, res, callback) {
-
-    if (parameters['PublicationID'] && parameters['Width'] && parameters['Height'] && parameters['PageNumber']) {
-
-        var key = cdnRedisKeyPrefix+parameters['PublicationID']+'.'+parameters['Width']+'x'+parameters['Height'];
-
-        client.HGETALL(key, function (err, obj) {
-
-            if (err) {
-
-                callback(null);
-                parameters = null;
-                key = null;
-            }
-            else if (obj && obj[parameters['PageNumber'].toString()]) {
-
-                //console.log('Use CDN image '+parameters['PageNumber']);
-
-                var url = obj['cdnURL'] + '/'+ parameters['PageNumber']+'.'+ obj[parameters['PageNumber'].toString()];
-                res.redirect(url, 307)
-                callback(url);
-
-                parameters = null;
-                key = null;
-                url = null;
-            }
-            else {
-
-                //console.log('Resize and upload CDN');
-
-                cdnImageFlow(parameters,res,function (err, result) {
-
-                    if (err) {
-                        //console.log(err);
-                        callback (null);
-                    }
-                    else if (result) {
-
-                        //console.log(result);
-                        callback(result);
-                    }
-                    else callback(null);
-
-                    parameters = null;
-                    key = null;
-                });
-            }
-        });
-    }
-    else {
-
-        callback(null);
-        parameters = null;
-    }
-}
 
 var catalogRedisKeyPrefix = 'pub.';
 var imageSuffix           = 'Image.ashx?ImageType=Zoom&PageNumber=';
@@ -84,10 +27,10 @@ function downloadImages(parameters, res, callback) {
 
     client.HGETALL((catalogRedisKeyPrefix+parameters.PublicationID), function (err, obj) {
 
-        if(err) callback(err);
+        if(err) {callback(err);}
         else if (obj) {
 
-            if (parseInt(parameters['PageNumber']) <= parseInt(obj['pageCount'])) {
+            if (parseInt(parameters.PageNumber,10) <= parseInt(obj.pageCount,10)) {
 
                 var savePath = path.join(saveFilePathPrefix,parameters.PublicationID,parameters.PageNumber+'.jpg');
 
@@ -96,39 +39,32 @@ function downloadImages(parameters, res, callback) {
                     if (exists) {
 
                         callback(null, parameters, res, obj);
-                        savePath = null;
                     }
                     else {
 
                         var folderPath = path.join(saveFilePathPrefix,parameters.PublicationID);
-                        var url = obj['iPaperLink']+imageSuffix+parameters['PageNumber'];
+                        var url = obj.iPaperLink+imageSuffix+parameters.PageNumber;
 
                         fs.exists(folderPath, function(exists) {
 
                             if (exists) {
 
                                 fileSystem.downloadFileFromURL(url, savePath, function (err, success) {
-                                    if (err)            callback(err);
-                                    else if (success)   callback(null, parameters, res, obj);
+                                    if (err)            {callback(err);}
+                                    else if (success)   {callback(null, parameters, res, obj);}
 
-                                    url = null;
-                                    savePath = null;
-                                    folderPath = null;
                                 });
                             }
                             else
                             {
                                 fs.mkdir(folderPath, function(error) {
-                                    if(error) callback(error);
+                                    if(error) {callback(error);}
                                     else {
 
                                         fileSystem.downloadFileFromURL(url, savePath, function (err, success) {
-                                            if (err)            callback(err);
-                                            else if (success)   callback(null, parameters, res, obj);
+                                            if (err)            {callback(err);}
+                                            else if (success)   {callback(null, parameters, res, obj);}
 
-                                            url = null;
-                                            savePath = null;
-                                            folderPath = null;
                                         });
                                     }
                                 });
@@ -137,9 +73,9 @@ function downloadImages(parameters, res, callback) {
                     }
                 });
             }
-            else callback('!! Page '+parameters['PageNumber']+' not exist in '+parameters['PublicationID']);
+            else {callback('!! Page '+parameters.PageNumber+' not exist in '+parameters.PublicationID);}
         }
-        else if (!obj) callback('!! Publication '+parameters['PublicationID']+' is not exist');
+        else if (!obj) {callback('!! Publication '+parameters.PublicationID+' is not exist');}
     });
 }
 
@@ -165,24 +101,19 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
     // Set, update : X-Object-Meta-Book: 'Hello world'
     // Delete      : X-Remove-Object-Meta-Name: foo
 
-    var publicationID = parameters['PublicationID'];
+    var publicationID = parameters.PublicationID;
 
-    var containerName = publicationID+'_'+parameters['Width']+'x'+parameters['Height'];
+    var containerName = publicationID+'_'+parameters.Width+'x'+parameters.Height;
 
     var metaData = {'X-Object-Meta-ID': publicationID.toString()};
-    var date     = new Date(publicationInfo['pubStop']);
+    var date     = new Date(publicationInfo.pubStop);
 
     var contentType     = 'image/jpeg';
 
     cdnAPI.createUpdateObject(resizeImageFilePath, containerName, contentType, metaData, date, function (data) {
 
-        if (data)   callback(null, parameters, containerName);
-        else        callback('!! Failed to create /'+publicationID+'/'+path.basename(resizeImageFilePath));
-
-        publicationID = null;
-        metaData = null;
-        date = null;
-        contentType = null;
+        if (data)   {callback(null, parameters, containerName);}
+        else        {callback('!! Failed to create /'+publicationID+'/'+path.basename(resizeImageFilePath));}
 
         resizeImageFilePath = null;
         publicationInfo = null;
@@ -191,7 +122,7 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
 
 function enableContainerForCDN (parameters, containerName, callback) {
 
-    var key = cdnRedisKeyPrefix+parameters['PublicationID']+'.'+parameters['Width']+'x'+parameters['Height'];
+    var key = cdnRedisKeyPrefix+parameters.PublicationID+'.'+parameters.Width+'x'+parameters.Height;
 
     client.HGETALL(key, function (err, obj) {
 
@@ -199,7 +130,6 @@ function enableContainerForCDN (parameters, containerName, callback) {
 
             parameters = null;
             containerName = null;
-            key = null;
 
             callback(err);
         }
@@ -213,42 +143,39 @@ function enableContainerForCDN (parameters, containerName, callback) {
 
                     var cdnURLInfo = {};
 
-                    cdnURLInfo['cdnURL']    = cdnEnabledContainerDetails['x-cdn-uri'];
-                    cdnURLInfo['cdnSSL']    = cdnEnabledContainerDetails['x-cdn-ssl-uri'];
-                    cdnURLInfo['cdniOS']    = cdnEnabledContainerDetails['x-cdn-ios-uri'];
-                    cdnURLInfo['cdnStream'] = cdnEnabledContainerDetails['x-cdn-streaming-uri'];
+                    cdnURLInfo.cdnURL    = cdnEnabledContainerDetails['x-cdn-uri'];
+                    cdnURLInfo.cdnSSL    = cdnEnabledContainerDetails['x-cdn-ssl-uri'];
+                    cdnURLInfo.cdniOS    = cdnEnabledContainerDetails['x-cdn-ios-uri'];
+                    cdnURLInfo.cdnStream = cdnEnabledContainerDetails['x-cdn-streaming-uri'];
 
-                    cdnURLInfo[parameters['PageNumber'].toString()] = 'jpg';
+                    cdnURLInfo[parameters.PageNumber.toString()] = 'jpg';
 
                     client.HMSET(key,cdnURLInfo,function (err, result) {
-                        if (err) callback(err);
-                        else     callback(null,cdnURLInfo['cdnURL']+'/'+parameters['PageNumber']+'.jpg');
+                        if (err) {callback(err);}
+                        else     {callback(null,cdnURLInfo.cdnURL+'/'+parameters.PageNumber+'.jpg');}
 
                         parameters = null;
                         containerName = null;
-                        key = null;
 
-                        cdnURLInfo =null;
                         cdnEnabledContainerDetails = null;
                         result = null;
                     });
                 }
-                else callback('Enable container '+containerName+' failed');
+                else {callback('Enable container '+containerName+' failed');}
             });
         }
         else if (obj) {
 
             //console.log('Key exist');
 
-            obj[parameters['PageNumber'].toString()] = 'jpg';
+            obj[parameters.PageNumber.toString()] = 'jpg';
 
             client.HMSET(key,obj,function (err, result) {
-                if (err) callback(err);
-                else     callback(null,obj['cdnURL']+'/'+parameters['PageNumber']+'.jpg');
+                if (err) {callback(err);}
+                else     {callback(null,obj.cdnURL+'/'+parameters.PageNumber+'.jpg');}
 
                 parameters = null;
                 containerName = null;
-                key = null;
 
                 obj = null;
                 result = null;
@@ -256,3 +183,57 @@ function enableContainerForCDN (parameters, containerName, callback) {
         }
     });
 }
+
+var cdnImageFlow = async.compose(enableContainerForCDN,uploadImageToCloudFile,resizeImageAndServeLocalResizeImage,downloadImages);
+
+exports.cdnImage = function cdnImage (parameters, res, callback) {
+
+    if (parameters.PublicationID && parameters.Width && parameters.Height && parameters.PageNumber) {
+
+        var key = cdnRedisKeyPrefix+parameters.PublicationID+'.'+parameters.Width+'x'+parameters.Height;
+
+        client.HGETALL(key, function (err, obj) {
+
+            if (err) {
+
+                callback(null);
+                parameters = null;
+            }
+            else if (obj && obj[parameters.PageNumber.toString()]) {
+
+                //console.log('Use CDN image '+parameters['PageNumber']);
+
+                var url = obj.cdnURL + '/'+ parameters.PageNumber+'.'+ obj[parameters.PageNumber.toString()];
+                res.redirect(url, 307);
+                callback(url);
+
+                parameters = null;
+            }
+            else {
+
+                //console.log('Resize and upload CDN');
+
+                cdnImageFlow(parameters,res,function (err, result) {
+
+                    if (err) {
+                        //console.log(err);
+                        callback (null);
+                    }
+                    else if (result) {
+
+                        //console.log(result);
+                        callback(result);
+                    }
+                    else {callback(null);}
+
+                    parameters = null;
+                });
+            }
+        });
+    }
+    else {
+
+        callback(null);
+        parameters = null;
+    }
+};
