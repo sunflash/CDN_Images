@@ -8,20 +8,21 @@
 
 var async   = require('async');
 var fs      = require('fs');
-var path    = require('path')
+var path    = require('path');
 var fileSystem = require('./FileSystem');
 
 var imageSuffix         = 'Image.ashx?ImageType=Zoom&PageNumber=';
 var saveFilePathPrefix  = '../images';
 
-var status = 0;
-
-
 exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (activeCatalogs, activeCatalogsCount) {
 
     // ONLY one download instance at a time, status 0 no active instance, status 1 download instance running already
 
-    if (status == 0 && activeCatalogsCount > 0) {
+    var status;
+
+    if (!status) {status = 0;}
+
+    if (status === 0 && activeCatalogsCount > 0) {
 
         status = 1;
 
@@ -53,13 +54,9 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                         image.imageLink          = imageLinkBody + j;
 
                         activeCatalogImagesInfo.push(image);
-                        image = null;
+
                     }
 
-                    catalogPubID = null;
-                    catalogPageCount = null;
-                    imageLinkBody = null;
-                    saveFileDirectory = null;
                 }
 
                 console.log('downloadImageFoldersCount '+activeCatalogImageFolders.length);
@@ -80,14 +77,13 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                             if (exists) {next(true);}
                             else
                             {
-                                fs.mkdir(folderPath, function(error) {if(error) console.log(error);} );
+                                fs.mkdir(folderPath, function(error) {if(error) {console.log(error);}} );
                                 next(false);
                             }
                         });
-                    }
-                    ,function(results){
+                    },function(results){
 
-                        if (results.length > 0) console.log('Create '+results.length+' folders');
+                        if (results.length > 0) {console.log('Create '+results.length+' folders');}
                         callback(null, activeCatalogImageFolders, activeCatalogImagesInfo);
                     });
 
@@ -107,7 +103,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                         }
 
                         Array.prototype.diff = function(a) {
-                            return this.filter(function(i) {return !(a.indexOf(i) > -1);});
+                            return this.filter(function(i) {return (a.indexOf(i) < 0);});
                         };
 
                         var unusedExpiredFolders =  folderExist.diff(activeCatalogImageFolders);
@@ -121,13 +117,11 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                                 },
                                 function(err, results){
 
-                                    if (results) console.log('Delete '+results.length+' folders');
-                                    unusedExpiredFolders = null;
+                                    if (results) {console.log('Delete '+results.length+' folders');}
+
                                 });
                         }
-                        else unusedExpiredFolders = null;
 
-                        folderExist = null;
                         activeCatalogImageFolders = null;
 
                         callback(null,activeCatalogImagesInfo);
@@ -145,10 +139,9 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                         fs.exists(imageInfo.filePath, function(exists) {
 
                             if (exists) {next(true);}
-                            else         next(false);
+                            else        {next(false);}
                         });
-                    }
-                    ,function(results){
+                    },function(results){
 
                         activeCatalogImagesInfo = null;
                         callback(null,results);
@@ -173,20 +166,18 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                             //console.log(imageInfo.filePath+'  '+imageInfo.imageLink);
                             //console.log(imageInfo.filePath);
 
-                            if (success) next(null,imageInfo);
-                            else         next(null);
-                        })
-                    }
-                    ,function(err, results){
+                            if (success) {next(null,imageInfo);}
+                            else         {next(null);}
+                        });
+                    },function(err, results){
 
-                        if (results.length == downloadImagesInfo.length) {
+                        if (results.length === downloadImagesInfo.length) {
                             console.log('All images download success');
                         }
-                        else console.log(results.length+' of '+downloadImagesInfo.length+' succeed');
+                        else {console.log(results.length+' of '+downloadImagesInfo.length+' succeed');}
 
                         downloadImagesInfo = null;
                         results = null;
-                        maxDownloadSimultaneousConnections = null;
 
                         status = 0;
                     });
@@ -195,7 +186,6 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
             else {
                 console.log('No image to download');
                 downloadImagesInfo = null;
-                maxDownloadSimultaneousConnections = null;
 
                 status = 0;
             }
@@ -206,4 +196,4 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
     else {console.log('!!! ONLY one download instance at a time');}
 
     console.log('***** DownloadImages ***** '+activeCatalogsCount);
-}
+};
