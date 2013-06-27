@@ -49,10 +49,10 @@ exports.getCatalogData = function getCatalogData (callBack) {
                     }
                     else {
 
-                        if (rows.length > 0) callback(null,rows);
-                        else                 callback('Error, NO active catalogs');
+                        if (rows.length > 0) {callback(null,rows);}
+                        else                 {callback('Error, NO active catalogs');}
                     }
-                })
+                });
             });
         },
         function (activeCatalogArray, callback) {
@@ -75,13 +75,12 @@ exports.getCatalogData = function getCatalogData (callBack) {
                         }
                         else {next(null,rows);}
 
-                        iPaperID = null;
                     });
                 });
 
             }, function(err, pageCounts) {
 
-                if (err) callback(err);
+                if (err) {callback(err);}
                 else {
 
                     for (var i = 0; i < activeCatalogArray.length; i++) {
@@ -121,18 +120,15 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
                     activeCatalogs[i] = catalog;
 
-                    if (pageCount == 0) {
+                    if (pageCount === 0) {
                         console.log("!!! Error, catalog "+pubID+ " have NO pages.");
                     }
-                    else if ( (pageCount%2) == 1) {
+                    else if ( (pageCount%2) === 1) {
 
                         //console.log("!!! catalog "+pubID+ " have odd pages "+pageCount);
                     }
                     //else {console.log("Catalog "+pubID+" have "+pageCount+" pages.");}
 
-                    catalog = null;
-                    pageCount = null;
-                    pubID = null;
                 }
 
                 downloadImages.downloadActiveCatalogImage(activeCatalogs,activeCatalogArray.length);
@@ -140,7 +136,6 @@ exports.getCatalogData = function getCatalogData (callBack) {
             }
 
             callBack (activeCatalogs);
-            activeCatalogs = null;
         }
         activeCatalogArray = null;
     });
@@ -148,7 +143,7 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
     console.log('------------------------------------------------------------------');
     console.log('***** CatalogMetaData *****');
-}
+};
 
 
 
