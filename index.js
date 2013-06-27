@@ -8,6 +8,14 @@
 
 //-------------------------------------------------------------------------------
 
+function outputDataJSON (data,res) {
+
+    if (data)   {res.json(data);}
+    else        {res.send(404,"Aaaa ooo!");}
+
+    res.end();
+}
+
 // Node Cluster
 
 var cluster = require('cluster');
@@ -28,6 +36,7 @@ if (cluster.isMaster) {
         var oldPID = deadWorker.process.pid;
 
         // Log the event
+        console.log(code+' '+signal);
         console.log('worker '+oldPID+' died.');
         console.log('worker '+newPID+' born.');
     });
@@ -60,7 +69,6 @@ if (cluster.isMaster) {
 
     //------------------------------------------------ '/image'
 
-    var path        =  require('path');
     var cdnImage    =  require('./CDN/CDN_Image');
 
     app.get('/image', function(req, res){
@@ -77,7 +85,7 @@ if (cluster.isMaster) {
                 "PageNumber":page,
                 "Width":width,
                 "Height":height
-            }
+            };
 
             cdnImage.cdnImage(query, res, function(result) {
 
@@ -86,11 +94,6 @@ if (cluster.isMaster) {
                     res.end();
                 }
             });
-
-            publicationID = null;
-            page = null;
-            width = null;
-            height = null;
         }
         else {
             res.send(404,"Aaaa ooo!");
@@ -129,104 +132,106 @@ if (cluster.isMaster) {
 
         if(req.query.mode) {
 
-            if (req.query.mode == 'authDetails') {
+            var metaData;
+            var date;
+            var containerName;
+            var p;
+
+            if (req.query.mode === 'authDetails') {
 
                 cdnAPI.authDetails(function (data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'accountDetails') {
+            else if (req.query.mode === 'accountDetails') {
 
                 cdnAPI.accountDetails(function (data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'containerDetails') {
+            else if (req.query.mode === 'containerDetails') {
 
                 cdnAPI.containerDetails(req.query.containerName,function(data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'containerList') {
+            else if (req.query.mode ==='containerList') {
 
                 cdnAPI.containerList(function(data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'createContainer') {
+            else if (req.query.mode === 'createContainer') {
 
                 // Set metadata : X-Container-Meta-Book: 'Hello world'
 
-                var metaData;
-                //metaData = {'X-Container-Meta-Ghost': 'Buster', 'X-Container-Meta-super': 'man'};
+                metaData = {'X-Container-Meta-Ghost': 'Buster', 'X-Container-Meta-super': 'man'};
 
                 cdnAPI.createContainer(req.query.containerName, metaData, function(data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'setUpdateDeleteContainerMetaData') {
+            else if (req.query.mode === 'setUpdateDeleteContainerMetaData') {
 
                 // Set, update : X-Container-Meta-Book: 'Hello world'
                 // Delete      : X-Remove-Container-Meta-Name: foo
 
-                var metaData;
                 metaData = {'X-Remove-Container-Meta-Ghost': 'Buster', 'X-Container-Meta-Iron': 'man'};
 
                 cdnAPI.setUpdateDeleteContainerMetaData(req.query.containerName,metaData,function(data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'getContainerObjects') {
+            else if (req.query.mode === 'getContainerObjects') {
 
                 cdnAPI.getContainerObjects(req.query.containerName, function(data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'deleteSingleObject') {
+            else if (req.query.mode === 'deleteSingleObject') {
 
                 cdnAPI.deleteSingleObject(req.query.containerName, req.query.objectName, function (data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'deleteMultipleObjects') {
+            else if (req.query.mode === 'deleteMultipleObjects') {
 
                 cdnAPI.deleteMultipleObjects(req.query.containerName, req.query.objectNames.split(',') , function (data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'deleteAllObjectsInContainer') {
+            else if (req.query.mode === 'deleteAllObjectsInContainer') {
 
                 cdnAPI.deleteAllObjectsInContainer(req.query.containerName, function (data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'deleteContainers') {
+            else if (req.query.mode === 'deleteContainers') {
 
                 var containerNames = req.query.containerNames;
-                if (containerNames.indexOf(',') != -1) {containerNames = containerNames.split(',');}
+                if (containerNames.indexOf(',') !== -1) {containerNames = containerNames.split(',');}
 
                 cdnAPI.deleteContainers(containerNames, function (data) {
                     outputDataJSON(data,res);
-                    containerNames = null;
                 });
             }
-            else if (req.query.mode == 'createUpdateObject') {
+            else if (req.query.mode === 'createUpdateObject') {
 
                 // X-Object-Meta-PIN: 1234
 
-                var containerName   = 'Test';
+                containerName   = 'Test';
 
-                //var date        = new Date("June 12, 2013 16:30:00"); // Your timezone!
-                var date          = new Date().addHours(8);
+                //date        = new Date("June 12, 2013 16:30:00"); // Your timezone!
+                date          = new Date().addHours(8);
 
                 var filePath        = '../images/22959/1.jpg';
                 var contentType     = 'image/jpeg';
-                var metaData        =  {'X-Object-Meta-Ikea': 'kitchen catalog'};
+                metaData        =  {'X-Object-Meta-Ikea': 'kitchen catalog'};
 
                 /*
                  var filePath        = '../publication.json';
                  var contentType     = 'application/json';
-                 var metaData        =  {'X-Object-Meta-Feed': 'publication'};
+                 metaData        =  {'X-Object-Meta-Feed': 'publication'};
                  */
 
                 cdnAPI.createUpdateObject(filePath, containerName, contentType, metaData, date, function (data) {
@@ -234,27 +239,24 @@ if (cluster.isMaster) {
 
                     containerName = null;
                     date = null;
-                    filePath = null;
-                    contentType = null;
                     metaData = null;
                 });
             }
-            else if (req.query.mode == 'getObjectMetaData') {
+            else if (req.query.mode === 'getObjectMetaData') {
 
                 cdnAPI.objectDetails(req.query.containerName, req.query.objectName, function(data) {
                     outputDataJSON(data,res);
                 });
             }
-            else if (req.query.mode == 'updateObjectMetaData') {
+            else if (req.query.mode === 'updateObjectMetaData') {
 
                 // Set, update : X-Object-Meta-Book: 'Hello world'
                 // Delete      : X-Remove-Object-Meta-Name: foo
 
-                var metaData;
                 metaData = {'X-Remove-Object-Meta-Ikea': 'kitchen catalog', 'X-Object-Meta-catalog': 'ikea'};
 
-                //var date = new Date("June 12, 2013 16:1:00"); // Your timezone!
-                var date = new Date().addHours(5);
+                //date = new Date("June 12, 2013 16:1:00"); // Your timezone!
+                date = new Date().addHours(5);
 
                 cdnAPI.updateObjectMetaData(req.query.containerName, req.query.objectName, metaData, date, function (statusCode) {
                     outputDataJSON(statusCode,res);
@@ -263,136 +265,127 @@ if (cluster.isMaster) {
                     date = null;
                 });
             }
-            else if (req.query.mode == 'copyObject') {
+            else if (req.query.mode === 'copyObject') {
 
-                if (req.query.parameters.indexOf(',') != -1) {
+                if (req.query.parameters.indexOf(',') !== -1) {
 
-                    var p = req.query.parameters.split(',');
-                    var metaData = {'X-Object-Meta-copy': 'object'};
+                    p = req.query.parameters.split(',');
+                    metaData = {'X-Object-Meta-copy': 'object'};
 
                     cdnAPI.copyObject(p[0],p[1],p[2],p[3],metaData, function(statusCode) {
                         outputDataJSON(statusCode,res);
 
                         p = null;
                         metaData = null;
-                    })
+                    });
                 }
-                else outputDataJSON(null, res);
+                else {outputDataJSON(null, res);}
             }
-            else if (req.query.mode == 'moveObject') {
+            else if (req.query.mode === 'moveObject') {
 
-                if (req.query.parameters.indexOf(',') != -1) {
+                if (req.query.parameters.indexOf(',') !== -1) {
 
-                    var p = req.query.parameters.split(',');
-                    var metaData = {'X-Object-Meta-move': 'object'};
+                    p = req.query.parameters.split(',');
+                    metaData = {'X-Object-Meta-move': 'object'};
 
                     cdnAPI.moveObject(p[0],p[1],p[2],p[3],metaData, function(statusCode) {
                         outputDataJSON(statusCode,res);
 
                         p = null;
                         metaData = null;
-                    })
+                    });
                 }
-                else outputDataJSON(null, res);
+                else {outputDataJSON(null, res);}
             }
-            else if (req.query.mode == 'renameObject') {
+            else if (req.query.mode === 'renameObject') {
 
-                if (req.query.parameters.indexOf(',') != -1) {
+                if (req.query.parameters.indexOf(',') !== -1) {
 
-                    var p = req.query.parameters.split(',');
-                    var metaData = {'X-Object-Meta-rename': 'object'};
+                    p = req.query.parameters.split(',');
+                    metaData = {'X-Object-Meta-rename': 'object'};
 
                     cdnAPI.renameUpdateObject(p[0],p[1],p[2],metaData, function(statusCode) {
                         outputDataJSON(statusCode,res);
 
                         p = null;
                         metaData = null;
-                    })
+                    });
                 }
-                else outputDataJSON(null, res);
+                else {outputDataJSON(null, res);}
             }
-            else if (req.query.mode == 'downloadObject') {
+            else if (req.query.mode === 'downloadObject') {
 
-                if (req.query.parameters.indexOf(',') != -1) {
+                if (req.query.parameters.indexOf(',') !== -1) {
 
-                    var p = req.query.parameters.split(',');
+                    p = req.query.parameters.split(',');
 
                     cdnAPI.downloadObject(p[0],p[1],p[2], function(statusCode) {
                         outputDataJSON(statusCode,res);
 
                         p = null;
-                    })
+                    });
                 }
-                else outputDataJSON(null, res);
+                else {outputDataJSON(null, res);}
             }
-            else if (req.query.mode == 'cdnEnabledContainerList') {
+            else if (req.query.mode === 'cdnEnabledContainerList') {
 
                 cdnAPI.cdnEnabledContainerList(function(cdnEnabledContainerList){
 
                     outputDataJSON(cdnEnabledContainerList,res);
                 });
             }
-            else if (req.query.mode == 'cdnEnabledContainerDetails') {
+            else if (req.query.mode === 'cdnEnabledContainerDetails') {
 
                 cdnAPI.cdnEnabledContainerDetails(req.query.containerName,function(cdnEnabledContainerDetails) {
 
                     outputDataJSON(cdnEnabledContainerDetails,res);
                 });
             }
-            else if (req.query.mode == 'cdnEnableContainer') {
+            else if (req.query.mode === 'cdnEnableContainer') {
 
                 cdnAPI.cdnEnableContainer(req.query.containerName, req.query.ttl, function (cdnEnabledContainerDetails) {
 
                     outputDataJSON(cdnEnabledContainerDetails, res);
                 });
             }
-            else if (req.query.mode == 'cdnDisableContainer') {
+            else if (req.query.mode === 'cdnDisableContainer') {
 
                 cdnAPI.cdnDisableContainer(req.query.containerName, function(statusCode) {
                     outputDataJSON(statusCode, res);
-                })
+                });
             }
-            else if (req.query.mode == 'changeCDNContainerAttributes') {
+            else if (req.query.mode === 'changeCDNContainerAttributes') {
 
-                var containerName   = null;
-                var TTL             = null;
+                var ttl             = null;
                 var cdnEnable       = null;
                 var logRetention    = null;
 
-                if (req.query.containerName) containerName  = req.query.containerName;
-                if (req.query.TTL)           TTL            = req.query.TTL;
-                if (req.query.cdnEnable)     cdnEnable      = req.query.cdnEnable;
-                if (req.query.logRetention)  logRetention   = req.query.logRetention;
+                if (req.query.containerName) {containerName  = req.query.containerName;}
+                if (req.query.TTL)           {ttl            = req.query.TTL;}
+                if (req.query.cdnEnable)     {cdnEnable      = req.query.cdnEnable;}
+                if (req.query.logRetention)  {logRetention   = req.query.logRetention;}
 
-                cdnAPI.changeCDNContainerAttributes(containerName, TTL, cdnEnable, logRetention , function (containerDetails) {
+                cdnAPI.changeCDNContainerAttributes(containerName, ttl, cdnEnable, logRetention , function (containerDetails) {
 
                     outputDataJSON(containerDetails, res);
                 });
             }
-            else if (req.query.mode == 'cdnClean') {
+            else if (req.query.mode === 'cdnClean') {
 
                 cdnClean.cleanExpiredDataInCloudFileAndCDN( function (result) {
                     outputDataJSON(result,res);
                 });
             }
-            else res.end();
+            else {res.end();}
         }
-        else res.end();
+        else {res.end();}
     });
 }
 
 Date.prototype.addHours= function(h){
     this.setHours(this.getHours()+h);
     return this;
-}
-
-function outputDataJSON (data,res) {
-
-    if (data)   res.json(data);
-    else        res.send(404,"Aaaa ooo!");
-
-    res.end();
-}
+};
 
 //-------------------------------------------------------------------------------
 
