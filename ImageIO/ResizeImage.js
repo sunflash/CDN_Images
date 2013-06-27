@@ -13,50 +13,15 @@ var path    = require('path');
 
 var saveFilePathPrefix  = '../images';
 
-var  resizeImageFlow  = async.compose(resizeRequestImage,createResizeImageFolderIfNotExist,checkImageExistLocal);
-
-exports.resizeImage = function resizeImage (resizeParameters,callback) {
-
-    var resizeImagePath = path.join(saveFilePathPrefix,resizeParameters.PublicationID.toString(),(resizeParameters.Width+'x'+resizeParameters.Height),(resizeParameters.PageNumber+'.jpg'));
-
-    fs.exists(resizeImagePath, function(exists) {
-
-        if (exists) {
-            //console.log('ResizeImageExist '+resizeImagePath);
-            callback(resizeImagePath);
-        }
-        else {
-
-            resizeImageFlow(resizeParameters,function (err, result) {
-
-                if (err) {
-                    console.log(err);
-                    callback (null);
-                }
-                else if (result) {
-
-                    callback(result);
-                }
-                else callback(null);
-            });
-        }
-
-        resizeImagePath = null;
-    });
-
-    //console.log('***** ResizeImage *****');
-}
-
 function checkImageExistLocal (parameters, callback) {
 
     var imageFilePath = path.join(saveFilePathPrefix, parameters.PublicationID.toString(), (parameters.PageNumber+'.jpg'));
 
     fs.exists(imageFilePath, function(exists) {
 
-        if (!exists) callback('Image NOT exist');
-        else         callback(null,parameters,path.dirname(imageFilePath));
+        if (!exists) {callback('Image NOT exist');}
+        else         {callback(null,parameters,path.dirname(imageFilePath));}
 
-        imageFilePath = null;
     });
 }
 
@@ -71,10 +36,10 @@ function createResizeImageFolderIfNotExist (parameters,imageFolderPath,callback)
             fs.mkdir(saveFileFolderPath, function(error) {
 
                 callback(null,parameters,imageFolderPath,saveFileFolderPath);
-
+                if (error) {}
             });
         }
-        else callback(null,parameters,imageFolderPath,saveFileFolderPath);
+        else {callback(null,parameters,imageFolderPath,saveFileFolderPath);}
     });
 }
 
@@ -103,24 +68,49 @@ function resizeRequestImage (parameters,imageFolderPath,saveFileFolderPath,callb
     writeStream.on('close', function () {
         callback(null,saveFilePath);
 
-        filename = null;
-        imageFilePath = null;
         saveFilePath = null;
     });
 
     writeStream.on('error', function (){
 
         fs.unlink(saveFilePath, function (err) {
-            if (err) callback(err);
+            if (err) {callback(err);}
             else {
                 callback(new Error('successfully deleted '+saveFilePath),null);
             }
-
-            filename = null;
-            imageFilePath = null;
-            saveFilePath = null;
         });
     });
 
 }
 
+var  resizeImageFlow  = async.compose(resizeRequestImage,createResizeImageFolderIfNotExist,checkImageExistLocal);
+
+exports.resizeImage = function resizeImage (resizeParameters,callback) {
+
+    var resizeImagePath = path.join(saveFilePathPrefix,resizeParameters.PublicationID.toString(),(resizeParameters.Width+'x'+resizeParameters.Height),(resizeParameters.PageNumber+'.jpg'));
+
+    fs.exists(resizeImagePath, function(exists) {
+
+        if (exists) {
+            //console.log('ResizeImageExist '+resizeImagePath);
+            callback(resizeImagePath);
+        }
+        else {
+
+            resizeImageFlow(resizeParameters,function (err, result) {
+
+                if (err) {
+                    console.log(err);
+                    callback (null);
+                }
+                else if (result) {
+
+                    callback(result);
+                }
+                else {callback(null);}
+            });
+        }
+    });
+
+    //console.log('***** ResizeImage *****');
+};
