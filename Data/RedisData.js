@@ -10,27 +10,6 @@ var async = require("async");
 var redis = require("redis"),
     client = redis.createClient();
 
-var  dataFlow  = async.compose(cleanUnusedExpiredData,overWriteWithFreshData);
-
-exports.updateRedisData = function updateRedisData (activeCatalogs, activeCatalogsCount) {
-
-    if (activeCatalogsCount > 0) {
-
-        dataFlow(activeCatalogs, activeCatalogsCount,function (err, result) {
-
-            if (err)                    console.log(err);
-            else if (!result)           console.log('NO unusedExpiredCatalogs data in redis db, no clean up needed');
-            else if (result.length > 0) {
-                console.log('Remove '+result.length+' unusedExpiredCatalogs data in redis db');
-                result = null;
-            }
-        });
-    }
-
-    console.log('***** RedisData *****');
-}
-
-
 var catalogRedisKeyPrefix = 'pub.';
 var activeCatalogPubIDKey = 'activePubID';
 var oldCatalogPubIDKey    = 'oldPubID';
@@ -47,10 +26,9 @@ function overWriteWithFreshData (activeCatalogsData, activeCatalogsCount, callba
         activeCatalogPubID.push(activeCatalogsData[i].pubID);
 
         client.HMSET(catalogPubID,activeCatalogInfo,function (err, obj) {
-            if (err) callback(err);
+            if (err) {callback(err);}
             //else     console.dir(obj);
-            activeCatalogInfo = null;
-            catalogPubID      = null;
+            if(obj) {}
         });
     }
 
@@ -60,14 +38,13 @@ function overWriteWithFreshData (activeCatalogsData, activeCatalogsCount, callba
 
             obj = null;
 
-            if (err) callback(err);
+            if (err) {callback(err);}
             else {
 
                 client.SADD(activeCatalogPubIDKey, activeCatalogPubID, function (err, obj) {
 
-                    if (err) callback(err);
+                    if (err) {callback(err);}
                     else {
-                        activeCatalogPubID = null;
                         obj = null;
                         callback(null);
                     }
@@ -77,7 +54,6 @@ function overWriteWithFreshData (activeCatalogsData, activeCatalogsCount, callba
     }
     else {
 
-        activeCatalogPubID = null;
         callback('!! Empty activeCatalogsData');
     }
 }
@@ -88,7 +64,7 @@ function cleanUnusedExpiredData(callback) {
 
     client.SDIFF(oldCatalogPubIDKey, activeCatalogPubIDKey, function (err, unusedExpiredCatalogs) {
 
-        if(err) callback(err);
+        if(err) {callback(err);}
         else if (unusedExpiredCatalogs.length > 0)
         {
             for (var i = 0; i < unusedExpiredCatalogs.length; i++) {
@@ -96,7 +72,7 @@ function cleanUnusedExpiredData(callback) {
                 var unusedExpiredCatalogKey = catalogRedisKeyPrefix + unusedExpiredCatalogs[i];
 
                 client.DEL(unusedExpiredCatalogKey, function (err, obj) {
-                        if (err) callback(err);
+                        if (err) {callback(err);}
                         obj = null;
                     }
                 );
@@ -104,17 +80,37 @@ function cleanUnusedExpiredData(callback) {
 
             client.SADD(cdnCleanKey, unusedExpiredCatalogs, function (err, obj) {
 
-                if(err) callback(err);
+                if(err) {callback(err);}
                 obj = null;
                 callback(null,unusedExpiredCatalogs);
             });
         }
-        else callback(null, null);
+        else {callback(null, null);}
 
         client.DEL(oldCatalogPubIDKey, function(err, obj) {
-            if(err) callback(err);
+            if(err) {callback(err);}
             obj = null;
         });
     });
 }
+
+var  dataFlow  = async.compose(cleanUnusedExpiredData,overWriteWithFreshData);
+
+exports.updateRedisData = function updateRedisData (activeCatalogs, activeCatalogsCount) {
+
+    if (activeCatalogsCount > 0) {
+
+        dataFlow(activeCatalogs, activeCatalogsCount,function (err, result) {
+
+            if (err)                    {console.log(err);}
+            else if (!result)           {console.log('NO unusedExpiredCatalogs data in redis db, no clean up needed');}
+            else if (result.length > 0) {
+                console.log('Remove '+result.length+' unusedExpiredCatalogs data in redis db');
+                result = null;
+            }
+        });
+    }
+
+    console.log('***** RedisData *****');
+};
 
