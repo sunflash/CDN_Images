@@ -110,13 +110,20 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
 
     var contentType     = 'image/jpeg';
 
-    cdnAPI.createUpdateObject(resizeImageFilePath, containerName, contentType, metaData, date, function (data) {
+    cdnAPI.objectDetails(containerName,path.basename(resizeImageFilePath), function (data) {
 
-        if (data)   {callback(null, parameters, containerName);}
-        else        {callback('!! Failed to create /'+publicationID+'/'+path.basename(resizeImageFilePath));}
+        if (!data) {
 
-        resizeImageFilePath = null;
-        publicationInfo = null;
+            cdnAPI.createUpdateObject(resizeImageFilePath, containerName, contentType, metaData, date, function (data) {
+
+                if (data)   {callback(null, parameters, containerName);}
+                else        {callback('!! Failed to create /'+publicationID+'/'+path.basename(resizeImageFilePath));}
+
+                resizeImageFilePath = null;
+                publicationInfo = null;
+            });
+        }
+        else {callback(null, parameters, containerName);}
     });
 }
 
