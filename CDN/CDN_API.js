@@ -1659,7 +1659,7 @@ function downloadCloudFileObject(containerName, objectName, savePath, callback) 
                                 fs.unlink(savePath, function (err) {
                                     if (err) {callback(err);}
                                     else {
-                                        console.log('A successfully deleted '+savePath);
+                                        //console.log('A successfully deleted '+savePath);
                                         callback(null);
                                     }
                                 });
@@ -1697,7 +1697,7 @@ function downloadCloudFileObject(containerName, objectName, savePath, callback) 
                                             fs.unlink(savePath, function (err) {
                                                 if (err) {callback(err);}
                                                 else {
-                                                    console.log('B successfully deleted '+savePath);
+                                                    //console.log('B successfully deleted '+savePath);
                                                     callback(null);
                                                 }
                                             });
@@ -1708,7 +1708,7 @@ function downloadCloudFileObject(containerName, objectName, savePath, callback) 
                                         fs.unlink(savePath, function (err) {
                                             if (err) {callback(err);}
                                             else {
-                                                console.log("B No file found at url");
+                                                //console.log("B No file found at url");
                                                 callback(null);
                                             }
                                         });
@@ -1721,7 +1721,7 @@ function downloadCloudFileObject(containerName, objectName, savePath, callback) 
                             fs.unlink(savePath, function (err) {
                                 if (err) {callback(err);}
                                 else {
-                                    console.log("A No file found at url");
+                                    //console.log("A No file found at url");
                                     callback(null);
                                 }
                             });

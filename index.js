@@ -117,7 +117,7 @@ if (cluster.isMaster) {
                 else {
                     res.json(data);
                     res.end();
-                    console.log('JSON output');
+                    //console.log('JSON output');
                 }
             }
         );
