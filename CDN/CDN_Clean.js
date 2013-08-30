@@ -176,3 +176,52 @@ exports.cleanExpiredDataInCloudFileAndCDN = function cleanExpiredDataInCloudFile
 
     console.log('***** Clean old data in Cloud File and CDN ***** '+ new Date());
 };
+
+function cleanCatalogDataInRedisDB (cleanPubID,expiredContainerInfo, callback) {
+
+    if (expiredContainerInfo && expiredContainerInfo.length > 0 ) {
+
+        async.each(expiredContainerInfo, function(expiredContainerKey, next) {
+
+                client.DEL(expiredContainerKey, function(err, obj) {
+
+                    if(err) {next(err);}
+                    else    {next();}
+
+                    obj = null;
+                });
+            },function(err) {
+
+                if(err) {callback(err);}
+                else    {callback(null,expiredContainerInfo);}
+            }
+        );
+    }
+    else {callback(null,null);}
+
+    cleanPubID = null;
+}
+
+exports.cleanCloudFileAndCDNCatalogData = function cleanCloudFileAndCDNCatalogData (cleanPubID, callback) {
+
+    var cleanCloudFileAndCDNCatalogDataFlow = async.compose(cleanCatalogDataInRedisDB,deleteExpiredContainer,disableExpiredContainerInCDN,getContainerWithExpiredPubID);
+
+    cleanCloudFileAndCDNCatalogDataFlow(cleanPubID, function (err, result) {
+
+        if (err) {
+
+            console.log(err);
+            callback(null);
+        }
+        else if (!result)  {
+
+            console.log('No container with pubID, no clean up needed');
+            callback(null);
+        }
+        else if (result.length > 0) {
+
+            console.log('Remove '+result.length+' containers with expired data in CDN');
+            callback(result);
+        }
+    });
+};

@@ -38,18 +38,14 @@ function overWriteWithFreshData (activeCatalogsData, activeCatalogsCount, callba
 
             obj = null;
 
-            if (err) {callback(err);}
-            else {
+            client.SADD(activeCatalogPubIDKey, activeCatalogPubID, function (err, obj) {
 
-                client.SADD(activeCatalogPubIDKey, activeCatalogPubID, function (err, obj) {
-
-                    if (err) {callback(err);}
-                    else {
-                        obj = null;
-                        callback(null);
-                    }
-                });
-            }
+                if (err) {callback(err);}
+                else {
+                    obj = null;
+                    callback(null);
+                }
+            });
         });
     }
     else {

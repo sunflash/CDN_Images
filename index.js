@@ -123,6 +123,31 @@ if (cluster.isMaster) {
         );
     });
 
+    //------------------------------------------------------ '/updateCatalogData'
+
+    var updateCatalogData = require('./Management/UpdateCatalogData');
+
+    app.get('/update', function(req, res) {
+
+        var publicationIDs = req.query.id;
+
+        if (publicationIDs) {
+
+            if (publicationIDs.indexOf(',') !== -1) {publicationIDs = publicationIDs.split(',');}
+            if (typeof publicationIDs === 'string' || publicationIDs instanceof String) {publicationIDs = [publicationIDs];}
+
+            if (publicationIDs.length > 0) {
+
+                updateCatalogData.updateCatalogData(publicationIDs, function(data) {
+
+                     outputDataJSON(data,res);
+                });
+            }
+            else {res.end();}
+        }
+        else {res.end();}
+    });
+
     //------------------------------------------------------ '/api'
 
     var cdnAPI = require('./CDN/CDN_API');
