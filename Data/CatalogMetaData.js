@@ -13,8 +13,8 @@ var redisData      = require('./RedisData');
 
 var pool = mysql.createPool({
     host: 'minreklame.webhotel.net',
-    user: 'mroffice',
-    password: 'Pb9h9RY3',
+    user: 'remote',
+    password: 'Z44q9L11',
     database: 'minreklame_db'
     }
 );
