@@ -43,7 +43,7 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
                     connection.query(activeCatalogQuery, function(err, rows) {
 
-                        connection.end();
+                        connection.release();
 
                         if (err) {
                             //console.log(err.code);
@@ -73,7 +73,8 @@ exports.getCatalogData = function getCatalogData (callBack) {
                     else {
 
                         connection.query(catalogPageCountQuery,iPaperID,function(err, rows) {
-                            connection.end();
+
+                            connection.release();
 
                             if (err) {
                                 //console.log(err.code);
@@ -81,7 +82,6 @@ exports.getCatalogData = function getCatalogData (callBack) {
                                 next('Connection error');
                             }
                             else {next(null,rows);}
-
                         });
                     }
                 });
