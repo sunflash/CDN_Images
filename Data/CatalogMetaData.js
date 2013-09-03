@@ -38,21 +38,25 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
             pool.getConnection(function(err, connection) {
 
-                connection.query(activeCatalogQuery, function(err, rows) {
+                if (err) {callback('No database connection');}
+                else {
 
-                    connection.end();
+                    connection.query(activeCatalogQuery, function(err, rows) {
 
-                    if (err) {
-                        //console.log(err.code);
-                        //console.log(err.fatal);
-                        callback('Connection error');
-                    }
-                    else {
+                        connection.end();
 
-                        if (rows.length > 0) {callback(null,rows);}
-                        else                 {callback('Error, NO active catalogs');}
-                    }
-                });
+                        if (err) {
+                            //console.log(err.code);
+                            //console.log(err.fatal);
+                            callback('Connection error');
+                        }
+                        else {
+
+                            if (rows.length > 0) {callback(null,rows);}
+                            else                 {callback('Error, NO active catalogs');}
+                        }
+                    });
+                }
             });
         },
         function (activeCatalogArray, callback) {
@@ -65,17 +69,21 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
                 pool.getConnection(function(err, connection) {
 
-                    connection.query(catalogPageCountQuery,iPaperID,function(err, rows) {
-                        connection.end();
+                    if (err) {next('No database connection');}
+                    else {
 
-                        if (err) {
-                            //console.log(err.code);
-                            //console.log(err.fatal);
-                            next('Connection error');
-                        }
-                        else {next(null,rows);}
+                        connection.query(catalogPageCountQuery,iPaperID,function(err, rows) {
+                            connection.end();
 
-                    });
+                            if (err) {
+                                //console.log(err.code);
+                                //console.log(err.fatal);
+                                next('Connection error');
+                            }
+                            else {next(null,rows);}
+
+                        });
+                    }
                 });
 
             }, function(err, pageCounts) {

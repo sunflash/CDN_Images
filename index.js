@@ -58,7 +58,7 @@ if (cluster.isMaster) {
 
     app.get('/', function(req, res) {
 
-        res.send("MR Debian Test Server");
+        res.send("Hello World");
         res.end();
     });
 
