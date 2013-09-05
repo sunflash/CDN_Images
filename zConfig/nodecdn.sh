@@ -39,7 +39,7 @@ start() {
 
     echo "Starting $scriptId"
     cd $sourceDir
-    $forever start --minUptime 5000 --spinSleepTime 2000 --pidFile $foreverPidFile -a -l $logFile -o $outFile -e $errFile -w --sourceDir $sourceDir/ $indexFile
+    $forever start --minUptime 30000 --spinSleepTime 2000 --pidFile $foreverPidFile -a -l $logFile -o $outFile -e $errFile -w --sourceDir $sourceDir/ $indexFile
 }
 
 restart() {
