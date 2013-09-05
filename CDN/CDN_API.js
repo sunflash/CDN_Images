@@ -1243,7 +1243,7 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
 
             if (err) {
 
-                console.log(err);
+                //console.log(err);
                 callback(null);
             }
             else if (statusCode)    {callback(statusCode);}
@@ -1555,7 +1555,7 @@ function copyCloudFileObject (fromContainerName, fromObjectName, toContainerName
             ], function (err, result) {
 
                 if (err) {
-                    console.log(err);
+                    //console.log(err);
                     callback(null);
                 }
                 else if (result) {callback(result);}

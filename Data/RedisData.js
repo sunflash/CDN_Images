@@ -99,14 +99,16 @@ exports.updateRedisData = function updateRedisData (activeCatalogs, activeCatalo
         dataFlow(activeCatalogs, activeCatalogsCount,function (err, result) {
 
             if (err)                    {console.log(err);}
-            else if (!result)           {console.log('NO unusedExpiredCatalogs data in redis db, no clean up needed');}
+            else if (!result)           {
+                //console.log('NO unusedExpiredCatalogs data in redis db, no clean up needed');
+            }
             else if (result.length > 0) {
-                console.log('Remove '+result.length+' unusedExpiredCatalogs data in redis db');
+                //console.log('Remove '+result.length+' unusedExpiredCatalogs data in redis db');
                 result = null;
             }
         });
     }
 
-    console.log('***** RedisData *****');
+    //console.log('***** RedisData *****');
 };
 

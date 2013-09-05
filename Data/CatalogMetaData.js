@@ -149,8 +149,8 @@ exports.getCatalogData = function getCatalogData (callBack) {
     });
 
 
-    console.log('------------------------------------------------------------------');
-    console.log('***** CatalogMetaData *****');
+    //console.log('------------------------------------------------------------------');
+    //console.log('***** CatalogMetaData *****');
 };
 
 

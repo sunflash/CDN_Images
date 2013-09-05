@@ -30,7 +30,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
 
             function (callback) {
 
-                console.log('*** Download images begin');
+                //console.log('*** Download images begin');
 
                 // prepare data for download operation
 
@@ -59,8 +59,8 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
 
                 }
 
-                console.log('downloadImageFoldersCount '+activeCatalogImageFolders.length);
-                console.log('downloadImageLinksCount  '+activeCatalogImagesInfo.length);
+                //console.log('downloadImageFoldersCount '+activeCatalogImageFolders.length);
+                //console.log('downloadImageLinksCount  '+activeCatalogImagesInfo.length);
 
                 callback(null,activeCatalogImageFolders,activeCatalogImagesInfo);
             },
@@ -83,7 +83,8 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                         });
                     },function(results){
 
-                        if (results.length > 0) {console.log('Create '+results.length+' folders');}
+                        //if (results.length > 0) {console.log('Create '+results.length+' folders');}
+                        results = null;
                         callback(null, activeCatalogImageFolders, activeCatalogImagesInfo);
                     });
 
@@ -117,7 +118,8 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
                                 },
                                 function(err, results){
 
-                                    if (results) {console.log('Delete '+results.length+' folders');}
+                                    //if (results) {console.log('Delete '+results.length+' folders');}
+                                    results = null;
 
                                 });
                         }
@@ -153,7 +155,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
 
             var maxDownloadSimultaneousConnections = 10;
 
-            console.log('downloadCounts '+downloadImagesInfo.length);
+            //console.log('downloadCounts '+downloadImagesInfo.length);
 
             if (downloadImagesInfo.length > 0) {
 
@@ -184,7 +186,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
 
             }
             else {
-                console.log('No image to download');
+                //console.log('No image to download');
                 downloadImagesInfo = null;
 
                 status = 0;
@@ -193,7 +195,7 @@ exports.downloadActiveCatalogImage = function downloadActiveCatalogImage (active
         });
 
     }
-    else {console.log('!!! ONLY one download instance at a time');}
+    //else {console.log('!!! ONLY one download instance at a time');}
 
-    console.log('***** DownloadImages ***** '+activeCatalogsCount);
+    //console.log('***** DownloadImages ***** '+activeCatalogsCount);
 };
