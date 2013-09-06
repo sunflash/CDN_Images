@@ -90,7 +90,6 @@ if (cluster.isMaster) {
             cdnImage.cdnImage(query, res, function(result) {
 
                 if(!result) {
-                    res.send(404,"Aaaa ooo!");
                     res.end();
                 }
             });

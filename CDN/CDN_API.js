@@ -530,15 +530,15 @@ function createCloudFileContainer (containerName, metaData, callback) {
 
                 if (body) {}
 
-                if (response.statusCode === 201) {
+                if (response && response.statusCode === 201) {
 
                     callback(1);
                 }
-                else if (response.statusCode === 202) {
+                else if (response && response.statusCode === 202) {
 
                     callback(2);
                 }
-                else if (response.statusCode === 401) {
+                else if (response && response.statusCode === 401) {
 
                     authenticate(function(authInfoFresh) {
 
@@ -1166,19 +1166,23 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
                                 //console.log('A '+response.statusCode);
                                 //console.log(body);
 
-                                if (response.statusCode === 201) {
+                                if (response && response.statusCode === 201) {
 
                                     callback(null,201,hash, encodedContainerName);
                                 }
-                                else if (response.statusCode === 404) {
+                                else if (response && response.statusCode === 404) {
 
                                     callback(null,404,hash,encodedContainerName);
                                 }
-                                else if (response.statusCode === 401) {
+                                else if (response && response.statusCode === 401) {
 
                                     callback(null,401,hash,encodedContainerName);
                                 }
-                                else {callback(response.statusCode);}
+                                else {
+
+                                    if (response) {callback(response.statusCode);}
+                                    else          {callback('No response');}
+                                }
                             })
                     );
                 });
@@ -1227,11 +1231,15 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
                                     //console.log('B '+response.statusCode);
                                     //console.log(body);
 
-                                    if (response.statusCode === 201) {
+                                    if (response && response.statusCode === 201) {
 
                                         callback(null,1);
                                     }
-                                    else {callback(response.statusCode);}
+                                    else {
+
+                                        if (response) {callback(response.statusCode);}
+                                        else          {callback('No response');}
+                                    }
                                 })
                         );
                     });
@@ -1280,7 +1288,7 @@ function getObjectDetails (containerName, objectName, callback) {
 
                             //console.log('A '+response.statusCode);
 
-                            if (response.statusCode === 200) {
+                            if (response && response.statusCode === 200) {
 
                                 var objectDetails = {};
 
@@ -1311,7 +1319,7 @@ function getObjectDetails (containerName, objectName, callback) {
 
                                 callback(objectDetails);
                             }
-                            else if (response.statusCode === 401) {
+                            else if (response && response.statusCode === 401) {
 
                                 authenticate(function(authInfoFresh) {
 
