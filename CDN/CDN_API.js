@@ -166,30 +166,34 @@ function authenticate (callback) {
                 //console.log(body);
             }
 
-            if (response.statusCode === 204 || response.statusCode === 202) {
+            if (response) {
 
-                authInfo.authToken      = response.headers['x-auth-token'];
-                authInfo.serverURL      = response.headers['x-server-management-url'];
-                authInfo.storageURL     = response.headers['x-storage-url'];
-                authInfo.cdnURL         = response.headers['x-cdn-management-url'];
-                authInfo.storageToken   = response.headers['x-storage-token'];
+                if (response.statusCode === 204 || response.statusCode === 202) {
 
-                var now = new Date();
-                now.setSeconds(now.getSeconds() + parseInt(response.headers['cache-control'].split("=")[1],10));
-                authInfo.expireDate = now;
+                    authInfo.authToken      = response.headers['x-auth-token'];
+                    authInfo.serverURL      = response.headers['x-server-management-url'];
+                    authInfo.storageURL     = response.headers['x-storage-url'];
+                    authInfo.cdnURL         = response.headers['x-cdn-management-url'];
+                    authInfo.storageToken   = response.headers['x-storage-token'];
 
-                //console.log(authInfo);
-                //console.log('ExpireInSec '+response.headers['cache-control'].split("=")[1]);
+                    var now = new Date();
+                    now.setSeconds(now.getSeconds() + parseInt(response.headers['cache-control'].split("=")[1],10));
+                    authInfo.expireDate = now;
 
-                client.HMSET(authRedis,authInfo,function (err, obj) {
+                    //console.log(authInfo);
+                    //console.log('ExpireInSec '+response.headers['cache-control'].split("=")[1]);
 
-                    if (err) {callback(err);}
-                    //else     console.dir(obj);
+                    client.HMSET(authRedis,authInfo,function (err, obj) {
 
-                    if(obj) {}
+                        if (err) {callback(err);}
+                        //else     console.dir(obj);
 
-                    callback(authInfo);
-                });
+                        if(obj) {}
+
+                        callback(authInfo);
+                    });
+                }
+                else {callback(null);}
             }
             else {callback(null);}
         }
