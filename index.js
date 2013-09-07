@@ -406,6 +406,17 @@ if (cluster.isMaster) {
         }
         else {res.end();}
     });
+
+    app.get('/cleanALL', function(req, res) {
+
+        if (apiDebugFlag === 1) {
+
+            cdnClean.cleanAllCloudFileAndCDNCatalogData(function(data) {
+
+                outputDataJSON(data,res);
+            });
+        }
+    });
 }
 
 Date.prototype.addHours= function(h){

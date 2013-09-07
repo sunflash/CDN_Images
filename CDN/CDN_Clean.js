@@ -225,3 +225,97 @@ exports.cleanCloudFileAndCDNCatalogData = function cleanCloudFileAndCDNCatalogDa
         }
     });
 };
+
+function getAllContainer (callback) {
+
+    cdnAPI.containerList(function (containerList) {
+
+        var containerNames = [];
+
+        async.each(containerList,function(containerInfo, next) {
+
+            containerNames.push(containerInfo.name);
+            next();
+
+        },function(err) {
+
+            if (err)    {callback(err);}
+            else        {callback(null,containerNames);}
+        });
+    });
+}
+
+function disableContainer (containerNames,callback) {
+
+    if (containerNames && containerNames.length > 0 ) {
+
+        async.each(containerNames, function(containerName, next){
+
+                cdnAPI.cdnDisableContainer(containerName, function(containerDetails) {
+
+                    //console.log('Disable container '+containerName);
+                    next();
+                    containerDetails = null;
+                });
+            },function(err) {
+
+                callback(null,containerNames);
+                err = null;
+            }
+        );
+    }
+    else {
+
+        callback(null,containerNames);
+    }
+}
+
+function deleteContainer (containerNames, callback) {
+
+    if (containerNames && containerNames.length > 0 ) {
+
+        async.each(containerNames, function(containerName, next) {
+
+                cdnAPI.deleteContainers(containerName, function(containerDetails) {
+
+                    //console.log('Delete '+containerName);
+                    next();
+
+                    if (containerDetails) {}
+                });
+            },function(err) {
+
+                if(err) {callback(err);}
+                else    {callback(null,containerNames);}
+            }
+        );
+    }
+    else {
+
+        callback(null,containerNames);
+    }
+}
+
+exports.cleanAllCloudFileAndCDNCatalogData = function cleanAllCloudFileAndCDNCatalogData (callback) {
+
+    var cleanAllCloudFileAndCDNCatalogDataFlow = async.compose(deleteContainer,disableContainer,getAllContainer);
+
+    cleanAllCloudFileAndCDNCatalogDataFlow(function (err, result) {
+
+        if (err) {
+
+            console.log(err);
+            callback(null);
+        }
+        else if (!result)  {
+
+            console.log('No container in CDN, no clean up needed');
+            callback(null);
+        }
+        else if (result.length > 0) {
+
+            console.log('Remove '+result.length+' containers data in CDN');
+            callback(result);
+        }
+    });
+};

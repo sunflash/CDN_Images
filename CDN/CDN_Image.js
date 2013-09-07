@@ -81,17 +81,31 @@ function downloadImages(parameters, res, callback) {
 
 function resizeImageAndServeLocalResizeImage (parameters, res, publicationInfo, callback) {
 
-    resizeImage.resizeImage(parameters, function(resizeFilePath) {
+    var filename = parameters.PageNumber+'.jpg';
+    var saveFilePath = path.join(saveFilePathPrefix,parameters.PublicationID.toString(),(parameters.Width+'x'+parameters.Height),filename);
 
-        if (!resizeFilePath) {
-            res.send(404,"Aaaa ooo!");
-            res.end();
-            callback('!! NO resize image '+resizeFilePath);
+    fs.exists(saveFilePath, function(exists) {
+
+        if (exists) {
+
+            res.sendfile(path.resolve(saveFilePath));
+            callback(null, parameters, saveFilePath, publicationInfo);
         }
         else {
 
-            res.sendfile(path.resolve(resizeFilePath));
-            callback(null, parameters, resizeFilePath, publicationInfo);
+            resizeImage.resizeImage(parameters, function(resizeFilePath) {
+
+                if (!resizeFilePath) {
+                    res.send(404,"Aaaa ooo!");
+                    res.end();
+                    callback('!! NO resize image '+resizeFilePath);
+                }
+                else {
+
+                    res.sendfile(path.resolve(resizeFilePath));
+                    callback(null, parameters, resizeFilePath, publicationInfo);
+                }
+            });
         }
     });
 }
