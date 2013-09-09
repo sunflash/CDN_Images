@@ -43,16 +43,13 @@ function createResizeImageFolderIfNotExist (parameters,imageFolderPath,callback)
     });
 }
 
-var readStream;
-var writeStream;
-
 function resizeRequestImage (parameters,imageFolderPath,saveFileFolderPath,callback) {
 
     var filename      = parameters.PageNumber+'.jpg';
     var imageFilePath = path.join(imageFolderPath,filename);
     var saveFilePath  = path.join(saveFileFolderPath,filename);
-    readStream = fs.createReadStream(imageFilePath);
-    writeStream = fs.createWriteStream(saveFilePath);
+    var readStream = fs.createReadStream(imageFilePath);
+    var writeStream = fs.createWriteStream(saveFilePath);
 
     imageFolderPath = null;
     saveFileFolderPath = null;
@@ -66,9 +63,20 @@ function resizeRequestImage (parameters,imageFolderPath,saveFileFolderPath,callb
         .pipe(writeStream);
 
     writeStream.on('close', function () {
-        callback(null,saveFilePath);
 
-        saveFilePath = null;
+        fs.stat(saveFilePath, function (err, stats) {
+
+            if(err || (stats && stats.size === 0)) {
+
+                fs.unlink(saveFilePath, function (err) {
+                    if (err) {callback(err);}
+                    else {
+                        callback(new Error('Deleted empty file '+saveFilePath),null);
+                    }
+                });
+            }
+            else {callback(null,saveFilePath);}
+        });
     });
 
     writeStream.on('error', function (){
@@ -92,8 +100,37 @@ exports.resizeImage = function resizeImage (resizeParameters,callback) {
     fs.exists(resizeImagePath, function(exists) {
 
         if (exists) {
-            //console.log('ResizeImageExist '+resizeImagePath);
-            callback(resizeImagePath);
+
+            fs.stat(resizeImagePath, function (err, stats) {
+
+                if(err || (stats && stats.size === 0)) {
+
+                    fs.unlink(resizeImagePath, function (err) {
+
+                        if (err) {callback(null);}
+                        else {
+
+                            resizeImageFlow(resizeParameters,function (err, result) {
+
+                                if (err) {
+                                    console.log(err);
+                                    callback (null);
+                                }
+                                else if (result) {
+
+                                    callback(result);
+                                }
+                                else {callback(null);}
+                            });
+                        }
+                    });
+                }
+                else {
+
+                    //console.log('ResizeImageExist '+resizeImagePath);
+                    callback(resizeImagePath);
+                }
+            });
         }
         else {
 

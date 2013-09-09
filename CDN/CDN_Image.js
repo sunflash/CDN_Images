@@ -126,11 +126,15 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
 
     cdnAPI.objectDetails(containerName,path.basename(resizeImageFilePath), function (data) {
 
-        if (!data) {
+        var emptyFlag = 0;
+
+        if (data && data.contentSize === '0') {emptyFlag = 1;}
+
+        if (!data || emptyFlag === 1) {
 
             cdnAPI.createUpdateObject(resizeImageFilePath, containerName, contentType, metaData, date, function (data) {
 
-                if (data)   {callback(null, parameters, containerName);}
+                if (data)   {callback(null, parameters, containerName, resizeImageFilePath);}
                 else        {callback('!! Failed to create /'+publicationID+'/'+path.basename(resizeImageFilePath));}
 
                 resizeImageFilePath = null;
@@ -138,6 +142,22 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
             });
         }
         else {callback(null, parameters, containerName);}
+    });
+}
+
+function verifyImageInCloudFile(parameters, containerName,resizeImageFilePath, callback) {
+
+    cdnAPI.objectDetails(containerName,path.basename(resizeImageFilePath),function (data) {
+
+        var emptyFlag = 0;
+
+        if (data && data.contentSize === '0') {emptyFlag = 1;}
+
+        if (!data || emptyFlag === 1) {
+
+            callback('!! Empty file '+containerName+'/'+parameters.PageNumber+'.jpg');
+        }
+        else {callback (null,parameters,containerName);}
     });
 }
 
@@ -205,7 +225,7 @@ function enableContainerForCDN (parameters, containerName, callback) {
     });
 }
 
-var cdnImageFlow = async.compose(enableContainerForCDN,uploadImageToCloudFile,resizeImageAndServeLocalResizeImage,downloadImages);
+var cdnImageFlow = async.compose(enableContainerForCDN,verifyImageInCloudFile,uploadImageToCloudFile,resizeImageAndServeLocalResizeImage,downloadImages);
 
 exports.cdnImage = function cdnImage (parameters, res, callback) {
 

@@ -405,9 +405,11 @@ if (cluster.isMaster) {
         else {res.end();}
     });
 
+    var cdnResetCleanAllToken = 'z5YVeblDt8jE4iv5J3FkCkbQ9QGgzHg70pKGHdG9';
+
     app.get('/cleanALL', function(req, res) {
 
-        if (apiDebugFlag === 1) {
+        if (apiDebugFlag === 1 || req.query.token === cdnResetCleanAllToken) {
 
             cdnClean.cleanAllCloudFileAndCDNCatalogData(function(data) {
 
