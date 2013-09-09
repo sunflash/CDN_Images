@@ -145,7 +145,7 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
     });
 }
 
-function verifyImageInCloudFile(parameters, containerName,resizeImageFilePath, callback) {
+function verifyImageInCloudFile (parameters, containerName,resizeImageFilePath, callback) {
 
     cdnAPI.objectDetails(containerName,path.basename(resizeImageFilePath),function (data) {
 
@@ -155,7 +155,10 @@ function verifyImageInCloudFile(parameters, containerName,resizeImageFilePath, c
 
         if (!data || emptyFlag === 1) {
 
-            callback('!! Empty file '+containerName+'/'+parameters.PageNumber+'.jpg');
+            if (containerName && parameters && parameters.PageNumber) {
+                callback('!! Empty file '+containerName+'/'+parameters.PageNumber+'.jpg');
+            }
+            else {callback('!! Empty file ');}
         }
         else {callback (null,parameters,containerName);}
     });
@@ -259,7 +262,7 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
                 cdnImageFlow(parameters,res,function (err, result) {
 
                     if (err) {
-                        console.log(err);
+                        //console.log(err);
                         callback (null);
                     }
                     else if (result) {
