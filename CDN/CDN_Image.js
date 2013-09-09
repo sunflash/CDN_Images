@@ -89,7 +89,6 @@ function resizeImageAndServeLocalResizeImage (parameters, res, publicationInfo, 
         if (exists) {
 
             res.sendfile(path.resolve(saveFilePath));
-            res.end();
             callback(null, parameters, saveFilePath, publicationInfo);
         }
         else {
@@ -104,7 +103,6 @@ function resizeImageAndServeLocalResizeImage (parameters, res, publicationInfo, 
                 else {
 
                     res.sendfile(path.resolve(resizeFilePath));
-                    res.end();
                     callback(null, parameters, resizeFilePath, publicationInfo);
                 }
             });
