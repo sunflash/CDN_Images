@@ -232,16 +232,19 @@ function getAllContainer (callback) {
 
         var containerNames = [];
 
-        async.each(containerList,function(containerInfo, next) {
+        if (containerList && containerList.length > 0) {
 
-            containerNames.push(containerInfo.name);
-            next();
+            async.each(containerList,function(containerInfo, next) {
 
-        },function(err) {
+                containerNames.push(containerInfo.name);
+                next();
 
-            if (err)    {callback(err);}
-            else        {callback(null,containerNames);}
-        });
+            },function(err) {
+
+                if (err)    {callback(err);}
+                else        {callback(null,containerNames);}
+            });
+        }
     });
 }
 
