@@ -416,6 +416,7 @@ if (cluster.isMaster) {
                 outputDataJSON(data,res);
             });
         }
+        else {res.end();}
     });
 }
 

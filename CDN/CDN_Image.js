@@ -88,8 +88,37 @@ function resizeImageAndServeLocalResizeImage (parameters, res, publicationInfo, 
 
         if (exists) {
 
-            res.sendfile(path.resolve(saveFilePath));
-            callback(null, parameters, saveFilePath, publicationInfo);
+            fs.stat(saveFilePath, function (err, stats) {
+
+                if(err || (stats && stats.size === 0)) {
+
+                    fs.unlink(saveFilePath, function (err) {
+
+                        if (err) {
+                            //console.log(err);
+                        }
+
+                        resizeImage.resizeImage(parameters, function(resizeFilePath) {
+
+                            if (!resizeFilePath) {
+                                res.send(404,"Aaaa ooo!");
+                                res.end();
+                                callback('!! NO resize image '+resizeFilePath);
+                            }
+                            else {
+
+                                res.sendfile(path.resolve(resizeFilePath));
+                                callback(null, parameters, resizeFilePath, publicationInfo);
+                            }
+                        });
+                    });
+                }
+                else {
+
+                    res.sendfile(path.resolve(saveFilePath));
+                    callback(null, parameters, saveFilePath, publicationInfo);
+                }
+            });
         }
         else {
 
@@ -141,7 +170,7 @@ function uploadImageToCloudFile(parameters, resizeImageFilePath, publicationInfo
                 publicationInfo = null;
             });
         }
-        else {callback(null, parameters, containerName);}
+        else {callback(null, parameters, containerName, resizeImageFilePath);}
     });
 }
 
@@ -155,10 +184,7 @@ function verifyImageInCloudFile (parameters, containerName,resizeImageFilePath, 
 
         if (!data || emptyFlag === 1) {
 
-            if (containerName && parameters && parameters.PageNumber) {
-                callback('!! Empty file '+containerName+'/'+parameters.PageNumber+'.jpg');
-            }
-            else {callback('!! Empty file ');}
+            callback('!! Empty file '+containerName+'/'+parameters.PageNumber+'.jpg');
         }
         else {callback (null,parameters,containerName);}
     });

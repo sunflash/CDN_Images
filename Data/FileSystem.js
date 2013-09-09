@@ -34,7 +34,19 @@ exports.downloadFileFromURL = function saveFileFromURL (url, savePath, callback)
             out.pipe(localStream);
 
             localStream.on('close', function () {
-                callback(null, 1);
+
+                fs.stat(savePath, function (err, stats) {
+
+                    if(err || (stats && stats.size === 0)) {
+
+                        fs.unlink(savePath, function (err) {
+
+                            if (err) {callback(err);}
+                            else     {callback(new Error('deleted empty file '+savePath), null);}
+                        });
+                    }
+                    else {callback(null, 1);}
+                });
             });
 
             localStream.on('error', function (){
