@@ -245,6 +245,7 @@ function getAllContainer (callback) {
                 else        {callback(null,containerNames);}
             });
         }
+        else {callback(null,containerNames);}
     });
 }
 
