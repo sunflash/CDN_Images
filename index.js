@@ -89,9 +89,7 @@ if (cluster.isMaster) {
 
             cdnImage.cdnImage(query, res, function(result) {
 
-                if(!result) {
-                    res.end();
-                }
+
             });
         }
         else {

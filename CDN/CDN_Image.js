@@ -89,6 +89,7 @@ function resizeImageAndServeLocalResizeImage (parameters, res, publicationInfo, 
         if (exists) {
 
             res.sendfile(path.resolve(saveFilePath));
+            res.end();
             callback(null, parameters, saveFilePath, publicationInfo);
         }
         else {
@@ -103,6 +104,7 @@ function resizeImageAndServeLocalResizeImage (parameters, res, publicationInfo, 
                 else {
 
                     res.sendfile(path.resolve(resizeFilePath));
+                    res.end();
                     callback(null, parameters, resizeFilePath, publicationInfo);
                 }
             });
@@ -217,6 +219,7 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
 
             if (err) {
 
+                res.end();
                 callback(null);
                 parameters = null;
             }
@@ -226,6 +229,7 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
 
                 var url = obj.cdnURL + '/'+ parameters.PageNumber+'.'+ obj[parameters.PageNumber.toString()];
                 res.redirect(url, 307);
+                res.end();
                 callback(url);
 
                 parameters = null;
@@ -237,7 +241,7 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
                 cdnImageFlow(parameters,res,function (err, result) {
 
                     if (err) {
-                        //console.log(err);
+                        console.log(err);
                         callback (null);
                     }
                     else if (result) {
@@ -254,6 +258,7 @@ exports.cdnImage = function cdnImage (parameters, res, callback) {
     }
     else {
 
+        res.end();
         callback(null);
         parameters = null;
     }
