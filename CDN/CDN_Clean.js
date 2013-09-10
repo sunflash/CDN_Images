@@ -326,3 +326,56 @@ exports.cleanAllCloudFileAndCDNCatalogData = function cleanAllCloudFileAndCDNCat
         }
     });
 };
+
+function getEmptyContainer (callback) {
+
+    cdnAPI.containerList(function (containerList) {
+
+        var containerNames = [];
+
+        if (containerList && containerList.length > 0) {
+
+            async.each(containerList,function(containerInfo, next) {
+
+                if (containerInfo.name.indexOf('_') !== -1) {
+
+                    if (containerInfo.count === 0 || containerInfo.bytes === 0) {
+
+                        containerNames.push(containerInfo.name);
+                    }
+                }
+                next();
+
+            },function(err) {
+
+                if (err)    {callback(err);}
+                else        {callback(null,containerNames);}
+            });
+        }
+        else {callback(null,containerNames);}
+    });
+}
+
+exports.removeEmptyCDNContainer = function removeEmptyCDNContainer (callback) {
+
+    var removeEmptyCDNContainerFlow = async.compose(deleteContainer,disableContainer,getEmptyContainer);
+
+    removeEmptyCDNContainerFlow(function (err, result) {
+
+        if (err) {
+
+            console.log(err);
+            callback(null);
+        }
+        else if (!result)  {
+
+            console.log('No empty container in CDN, no clean up needed');
+            callback(null);
+        }
+        else if (result.length > 0) {
+
+            console.log('Remove '+result.length+' empty containers in CDN');
+            callback(result);
+        }
+    });
+};

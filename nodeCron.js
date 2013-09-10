@@ -26,7 +26,7 @@ exports.cron = function cron () {
 
     getCatalogDataCronJob.start();
 
-    var cleanExpiredDataCronJob = new cronJob('0 30 3,4 * * *', function(){
+    var cleanExpiredDataCronJob = new cronJob('0 30 3 * * *', function(){
 
         var currentTime = new Date();
         console.log(currentTime);
@@ -38,6 +38,19 @@ exports.cron = function cron () {
     },null, false);
 
     cleanExpiredDataCronJob.start();
+
+    var removeEmptyContainerCronJob = new cronJob('0 30 4 * * *', function(){
+
+        var currentTime = new Date();
+        console.log(currentTime);
+
+        cdnClean.removeEmptyCDNContainer(
+            function() {
+
+            });
+    },null, false);
+
+    removeEmptyContainerCronJob.start();
 };
 
 
