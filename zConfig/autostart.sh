@@ -11,6 +11,7 @@ then
       echo "Forever is running."
 else
       echo "Forever is down."
+      echo "($(date)) -- Forever is down." >> web/log/node.log
       service nodecdn start
 fi
 
