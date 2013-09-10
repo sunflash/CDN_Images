@@ -33,7 +33,7 @@ start() {
     then
             echo "Redis is running."
     else
-            echo echo "!!! Redis is not running. Starting Redis server.."
+            echo "!!! Redis is not running. Starting Redis server.."
             $redis $redisConfigFile
     fi
 
