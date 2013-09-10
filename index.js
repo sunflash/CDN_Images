@@ -151,10 +151,11 @@ if (cluster.isMaster) {
     var cdnClean = require('./CDN/CDN_Clean');
 
     var apiDebugFlag = 0;
+    var cdnResetCleanAllToken = 'z5YVeblDt8jE4iv5J3FkCkbQ9QGgzHg70pKGHdG9';
 
     app.get('/api', function(req, res) {
 
-        if(apiDebugFlag === 1 && req.query.mode) {
+        if((apiDebugFlag === 1 || req.query.token === cdnResetCleanAllToken) && req.query.mode) {
 
             var metaData;
             var date;
@@ -404,8 +405,6 @@ if (cluster.isMaster) {
         }
         else {res.end();}
     });
-
-    var cdnResetCleanAllToken = 'z5YVeblDt8jE4iv5J3FkCkbQ9QGgzHg70pKGHdG9';
 
     app.get('/cleanALL', function(req, res) {
 
