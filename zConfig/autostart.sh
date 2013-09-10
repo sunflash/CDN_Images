@@ -10,13 +10,7 @@ if [ -f $foreverPidFile ]
 then
       echo "Forever is running."
 else
+      service nodecdn start
       echo "Forever is down."
       echo "($(date)) -- Forever is down." >> /web/log/node.log
-      service nodecdn start
 fi
-
-
-
-
-
-
