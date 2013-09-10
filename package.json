@@ -1,6 +1,6 @@
 {
     "name":"MR-CDN",
-    "version":"0.0.1",
+    "version":"0.1.0",
     "description":"Generate scaled catalog image and push to CDN for delivery",
     "main":"./index",
     "dependencies":{

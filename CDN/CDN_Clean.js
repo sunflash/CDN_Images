@@ -236,7 +236,10 @@ function getAllContainer (callback) {
 
             async.each(containerList,function(containerInfo, next) {
 
-                containerNames.push(containerInfo.name);
+                if (containerInfo.name.indexOf('_') !== -1) {
+
+                    containerNames.push(containerInfo.name);
+                }
                 next();
 
             },function(err) {
