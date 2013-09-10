@@ -8,9 +8,10 @@ foreverPidFile=/var/run/forever.pid
 
 if [ -f $foreverPidFile ]
 then
-      echo "Forever is running." > /web/foreverStat.log
+      echo "Forever is running."
 else
-      echo "Forever is down." > /web/foreverStat.log
+      echo "Forever is down."
+      service nodecdn start
 fi
 
 
