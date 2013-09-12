@@ -43,14 +43,14 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
                     connection.query(activeCatalogQuery, function(err, rows) {
 
-                        connection.release();
-
                         if (err) {
                             //console.log(err.code);
                             //console.log(err.fatal);
                             callback('Connection error');
                         }
                         else {
+
+                            connection.release();
 
                             if (rows.length > 0) {callback(null,rows);}
                             else                 {callback('Error, NO active catalogs');}
@@ -74,14 +74,17 @@ exports.getCatalogData = function getCatalogData (callBack) {
 
                         connection.query(catalogPageCountQuery,iPaperID,function(err, rows) {
 
-                            connection.release();
-
                             if (err) {
                                 //console.log(err.code);
                                 //console.log(err.fatal);
                                 next('Connection error');
                             }
-                            else {next(null,rows);}
+                            else {
+
+                                connection.release();
+
+                                next(null,rows);
+                            }
                         });
                     }
                 });
