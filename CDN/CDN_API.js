@@ -1327,53 +1327,56 @@ function getObjectDetails (containerName, objectName, callback) {
 
                                 authenticate(function(authInfoFresh) {
 
-                                    request(
-                                        {
-                                            method:'HEAD',
-                                            uri:api.storageURL+'/'+encodedContainerName+'/'+encodedObjectName,
-                                            headers:{
-                                                'X-Auth-Token':authInfoFresh.authToken
-                                            }
-                                        }, function (error, response, body) {
+                                    if (authInfoFresh && authInfoFresh.authToken) {
 
-                                            //console.log('B '+response.statusCode);
-
-                                            if (body) {}
-
-                                            if (response.statusCode === 200) {
-
-                                                var objectDetails = {};
-
-                                                objectDetails.contentSize = response.headers['content-length'];
-                                                objectDetails.contentType = response.headers['content-type'];
-                                                objectDetails.etag        = response.headers.etag;
-                                                objectDetails.timeStamp   = new Date(parseInt(response.headers['x-timestamp'],10)*1000);
-                                                objectDetails.lastModified= new Date(response.headers['last-modified']);
-
-                                                if (response.headers['x-delete-at']) {
-
-                                                    objectDetails.expiredDate = new Date(parseInt(response.headers['x-delete-at'],10)*1000);
+                                        request(
+                                            {
+                                                method:'HEAD',
+                                                uri:api.storageURL+'/'+encodedContainerName+'/'+encodedObjectName,
+                                                headers:{
+                                                    'X-Auth-Token':authInfoFresh.authToken
                                                 }
+                                            }, function (error, response, body) {
 
-                                                var metaTag;
-                                                var metaHeaderPrefix = 'x-object-meta-';
+                                                //console.log('B '+response.statusCode);
 
-                                                for (var x in response.headers) {
+                                                if (body) {}
 
-                                                    if (x.indexOf(metaHeaderPrefix) !== -1) {
+                                                if (response.statusCode === 200) {
 
-                                                        if (!metaTag) {metaTag = {};}
-                                                        metaTag[x.substr(x.indexOf(metaHeaderPrefix)+metaHeaderPrefix.length, x.length-metaHeaderPrefix.length)] = response.headers[x];
+                                                    var objectDetails = {};
+
+                                                    objectDetails.contentSize = response.headers['content-length'];
+                                                    objectDetails.contentType = response.headers['content-type'];
+                                                    objectDetails.etag        = response.headers.etag;
+                                                    objectDetails.timeStamp   = new Date(parseInt(response.headers['x-timestamp'],10)*1000);
+                                                    objectDetails.lastModified= new Date(response.headers['last-modified']);
+
+                                                    if (response.headers['x-delete-at']) {
+
+                                                        objectDetails.expiredDate = new Date(parseInt(response.headers['x-delete-at'],10)*1000);
                                                     }
+
+                                                    var metaTag;
+                                                    var metaHeaderPrefix = 'x-object-meta-';
+
+                                                    for (var x in response.headers) {
+
+                                                        if (x.indexOf(metaHeaderPrefix) !== -1) {
+
+                                                            if (!metaTag) {metaTag = {};}
+                                                            metaTag[x.substr(x.indexOf(metaHeaderPrefix)+metaHeaderPrefix.length, x.length-metaHeaderPrefix.length)] = response.headers[x];
+                                                        }
+                                                    }
+
+                                                    if (metaTag) {objectDetails.metaTag = metaTag;}
+
+                                                    callback(objectDetails);
                                                 }
-
-                                                if (metaTag) {objectDetails.metaTag = metaTag;}
-
-                                                callback(objectDetails);
+                                                else {callback(null);}
                                             }
-                                            else {callback(null);}
-                                        }
-                                    );
+                                        );
+                                    }
                                 });
                             }
                             else {callback(null);}
