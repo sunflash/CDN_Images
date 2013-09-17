@@ -207,7 +207,7 @@ function enableContainerForCDN (parameters, containerName, callback) {
 
             //console.log('No key');
 
-            cdnAPI.cdnEnableContainer(containerName, 3600,function(cdnEnabledContainerDetails) {
+            cdnAPI.cdnEnableContainer(containerName, 900,function(cdnEnabledContainerDetails) {
 
                 if (cdnEnabledContainerDetails) {
 
