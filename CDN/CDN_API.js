@@ -1212,40 +1212,44 @@ function createUpdateCloudFileObjects (filePath, containerName, contentType, met
 
                     authenticate(function (authInfoFresh) {
 
-                        var headerValues = {};
-                        if (metaData) {headerValues = metaData;}
-                        headerValues['X-Auth-Token'] = authInfoFresh.authToken;
-                        headerValues['Content-type'] = contentType;
-                        headerValues.ETag         = hash;
-                        headerValues['Transfer-Encoding'] = 'chunked';
+                        if (authInfoFresh && authInfoFresh.authToken) {
 
-                        if (expiredDate) {headerValues['X-Delete-At'] = Math.floor(expiredDate.getTime()/1000.0).toString();}
+                            var headerValues = {};
+                            if (metaData) {headerValues = metaData;}
+                            headerValues['X-Auth-Token'] = authInfoFresh.authToken;
+                            headerValues['Content-type'] = contentType;
+                            headerValues.ETag         = hash;
+                            headerValues['Transfer-Encoding'] = 'chunked';
 
-                        fs.createReadStream(filePath).pipe(
+                            if (expiredDate) {headerValues['X-Delete-At'] = Math.floor(expiredDate.getTime()/1000.0).toString();}
 
-                            request(
-                                {
-                                    method:'PUT',
-                                    uri:authInfoFresh.storageURL+'/'+encodedContainerName+'/'+path.basename(filePath),
-                                    headers:headerValues
-                                }, function (error, response, body) {
+                            fs.createReadStream(filePath).pipe(
 
-                                    if (body) {}
+                                request(
+                                    {
+                                        method:'PUT',
+                                        uri:authInfoFresh.storageURL+'/'+encodedContainerName+'/'+path.basename(filePath),
+                                        headers:headerValues
+                                    }, function (error, response, body) {
 
-                                    //console.log('B '+response.statusCode);
-                                    //console.log(body);
+                                        if (body) {}
 
-                                    if (response && response.statusCode === 201) {
+                                        //console.log('B '+response.statusCode);
+                                        //console.log(body);
 
-                                        callback(null,1);
-                                    }
-                                    else {
+                                        if (response && response.statusCode === 201) {
 
-                                        if (response) {callback(response.statusCode);}
-                                        else          {callback('No response');}
-                                    }
-                                })
-                        );
+                                            callback(null,1);
+                                        }
+                                        else {
+
+                                            if (response) {callback(response.statusCode);}
+                                            else          {callback('No response');}
+                                        }
+                                    })
+                            );
+                        }
+                        else {callback('Authentication failed');}
                     });
                 }
                 else  if (statusCode === 201)  {callback(null,1);}
@@ -1377,6 +1381,7 @@ function getObjectDetails (containerName, objectName, callback) {
                                             }
                                         );
                                     }
+                                    else {callback(null);}
                                 });
                             }
                             else {callback(null);}
