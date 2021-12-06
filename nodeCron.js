@@ -6,51 +6,51 @@
  * To change this template use File | Settings | File Templates.
  */
 
-var catalogMetaData = require('./Data/CatalogMetaData');
-var cdnClean = require('./CDN/CDN_Clean');
+var catalogMetaData = require("./Data/CatalogMetaData");
+var cdnClean = require("./CDN/CDN_Clean");
 
-var cronJob = require('cron').CronJob;
+var cronJob = require("cron").CronJob;
 
-exports.cron = function cron () {
+exports.cron = function cron() {
+  var getCatalogDataCronJob = new cronJob(
+    "5 */5 * * * *",
+    function () {
+      var currentTime = new Date();
+      console.log(currentTime);
 
-    var getCatalogDataCronJob = new cronJob('5 */5 * * * *', function(){
+      catalogMetaData.getCatalogData(function () {});
+    },
+    null,
+    false
+  );
 
-        var currentTime = new Date();
-        console.log(currentTime);
+  getCatalogDataCronJob.start();
 
-        catalogMetaData.getCatalogData(
-            function () {
+  var cleanExpiredDataCronJob = new cronJob(
+    "0 30 3 * * *",
+    function () {
+      var currentTime = new Date();
+      console.log(currentTime);
 
-            });
-    },null, false);
+      cdnClean.cleanExpiredDataInCloudFileAndCDN(function () {});
+    },
+    null,
+    false
+  );
 
-    getCatalogDataCronJob.start();
+  cleanExpiredDataCronJob.start();
 
-    var cleanExpiredDataCronJob = new cronJob('0 30 3 * * *', function(){
+  var removeEmptyContainerCronJob = new cronJob(
+    "0 30 4 * * *",
+    function () {
+      var currentTime = new Date();
+      console.log(currentTime);
 
-        var currentTime = new Date();
-        console.log(currentTime);
+      cdnClean.removeEmptyCDNContainer(function () {});
+    },
+    null,
+    false
+  );
 
-        cdnClean.cleanExpiredDataInCloudFileAndCDN(
-            function() {
-
-            });
-    },null, false);
-
-    cleanExpiredDataCronJob.start();
-
-    var removeEmptyContainerCronJob = new cronJob('0 30 4 * * *', function(){
-
-        var currentTime = new Date();
-        console.log(currentTime);
-
-        cdnClean.removeEmptyCDNContainer(
-            function() {
-
-            });
-    },null, false);
-
-    removeEmptyContainerCronJob.start();
+  removeEmptyContainerCronJob.start();
 };
-
-
